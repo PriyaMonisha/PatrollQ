@@ -38,20 +38,21 @@ for reference files before writing any code.
 ---
 
 ## Current Status
-**Active Section:** Section 0 + Section 1 — Agent files + Project Setup
-**Last Working File:** config.py
-**Last Decision Made:** Data format = CSV gzipped; Docker = Yes; MLflow = local → JSON export
+**Active Section:** Section 1b complete — ready for Section 2
+**Last Working File:** CLAUDE_CONTEXT.md, PROJECT_KICKOFF_CHECKLIST.md
+**Last Decision Made:** FAST_MODE added to config.py; .gitignore anchored; CLAUDE_CONTEXT.md + PROJECT_KICKOFF_CHECKLIST.md tuned from EMI lessons
 
 ---
 
 ## Progress Tracker
 
 ### Completed ✅
-- [x] Section 0: .claude/ agent, command, rules files
-- [x] Section 1: config.py, requirements.txt, .gitignore, .env.example
+- [x] Section 0: .claude/ agent, command, rules files (commit 7e4309d)
+- [x] Section 1: config.py, requirements.txt, .gitignore, .env.example, CLAUDE.md, git init
+- [x] Section 1b: FAST_MODE in config.py, anchored .gitignore, CLAUDE_CONTEXT.md, PROJECT_KICKOFF_CHECKLIST.md
 
 ### In Progress 🔄
-- [ ] Section 1: CLAUDE.md (this file), git init
+(none — ready for Section 2)
 
 ### Remaining 📋
 - [ ] Section 2: src/data/loader.py, src/data/preprocessor.py, notebooks/01_data_acquisition.py
@@ -113,6 +114,25 @@ artifacts/mlflow_exports/ → all_runs.json, best_models.json
 - t-SNE: visually distinct clusters (qualitative)
 - DBSCAN noise fraction: < 10%
 - MLflow: ≥ 6 runs logged across all experiments
+
+---
+
+## Critical Rules from EMI Project Lessons (Applied to PatrolIQ)
+
+These rules were learned the hard way. Violating them causes silent failures.
+
+| # | Rule | Why (EMI lesson) |
+|---|---|---|
+| 1 | Use `/data/raw/` in .gitignore (anchored with `/`) | `data/raw/` excluded `src/data/` too → ModuleNotFoundError on cloud (DEP-01) |
+| 2 | Use `pages/` routing — not `st.navigation()` | `st.navigation()` + wrong Streamlit version = crash loop on cloud (DEP-02) |
+| 3 | NumpyEncoder on every `json.dump()` call | sklearn returns `np.float64` → `TypeError` in `json.dumps` (CQ-03) |
+| 4 | `FAST_MODE = True` at top of every training file | Accidentally ran full pipeline in dev; wasted time (TR-02) |
+| 5 | Never fit Hierarchical on full 500K | Ward linkage = O(n²) memory. 500K → ~200GB RAM (PQ-01) |
+| 6 | Never run t-SNE on full 500K | O(n²) complexity → hours or OOM. Use PCA first + 50K subsample (PQ-02) |
+| 7 | Streamlit Cloud reads `requirements.txt` by default | `streamlit-requirements.txt` ignored without explicit config (DEP-02) |
+| 8 | No `model.fit()` in `pages/` files | Pages are display-only — training on cloud would OOM and violates arch |
+| 9 | DBSCAN eps is in DEGREES not km | Document conversion: 0.008° ≈ 662m at Chicago lat 42°N (PQ-07) |
+| 10 | Folium map: subsample to ≤50K points | 500K CircleMarkers crash browser tabs (PQ-04) |
 
 ---
 

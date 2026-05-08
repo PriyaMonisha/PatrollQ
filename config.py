@@ -4,6 +4,13 @@
 
 from pathlib import Path
 
+# ── Execution Mode ───────────────────────────────────────────
+# FAST_MODE = True  → dev runs: smaller subsamples, skip t-SNE, K elbow range 2-5 only
+# FAST_MODE = False → production: full 500K pipeline, complete elbow sweep, full t-SNE
+# Rule: always develop with FAST_MODE=True; flip to False only for final artifact generation
+# Lesson learned from EMI project: define this BEFORE writing any training script (TR-02)
+FAST_MODE = True
+
 # ── Reproducibility ──────────────────────────────────────────
 RANDOM_STATE = 42
 
