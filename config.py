@@ -23,8 +23,10 @@ MODELS_DIR = BASE_DIR / "models"
 DOCS_FIGURES_DIR = BASE_DIR / "docs" / "figures"
 
 PROCESSED_CSV = DATA_PROCESSED_DIR / "chicago_crime_500k.csv.gz"
+FEATURES_CSV = DATA_PROCESSED_DIR / "chicago_crime_features.csv.gz"
 SAMPLE_METADATA = DATA_PROCESSED_DIR / "sample_metadata.json"
 LABEL_ENCODERS_PATH = MODELS_DIR / "label_encoders.pkl"
+FEATURE_ENGINEER_PATH = MODELS_DIR / "feature_engineer.pkl"
 
 # ── Data ─────────────────────────────────────────────────────
 SAMPLE_SIZE = 500_000
