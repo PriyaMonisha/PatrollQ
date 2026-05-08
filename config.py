@@ -57,8 +57,8 @@ FULL_FEATURES = GEO_FEATURES + TEMPORAL_FEATURES + [
     "Crime_Severity_Score",
     "primary_type_code",
     "location_desc_code",
-    "Arrest",
-    "Domestic",
+    "arrest",    # lowercase — normalized by loader, cast to bool in preprocessor
+    "domestic",  # lowercase — normalized by loader, cast to bool in preprocessor
 ]
 
 # Crime severity scores (higher = more severe)
