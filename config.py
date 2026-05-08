@@ -24,9 +24,11 @@ DOCS_FIGURES_DIR = BASE_DIR / "docs" / "figures"
 
 PROCESSED_CSV = DATA_PROCESSED_DIR / "chicago_crime_500k.csv.gz"
 SAMPLE_METADATA = DATA_PROCESSED_DIR / "sample_metadata.json"
+LABEL_ENCODERS_PATH = MODELS_DIR / "label_encoders.pkl"
 
 # ── Data ─────────────────────────────────────────────────────
 SAMPLE_SIZE = 500_000
+FAST_SAMPLE_SIZE = 50_000   # for FAST_MODE=True development runs
 
 # Expected columns from Chicago Data Portal CSV
 EXPECTED_COLUMNS = [
