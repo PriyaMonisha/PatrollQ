@@ -105,6 +105,11 @@ KMEANS_TEMPORAL_K_RANGE = range(2, 9)  # test K = 2 to 8
 KMEANS_TEMPORAL_N_CLUSTERS = 4        # override after running
 
 # ── Dimensionality Reduction ─────────────────────────────────
+# REDUCTION_FEATURES: input to PCA and t-SNE — same engineered features
+# used for clustering (FULL_FEATURES). Raw lat/lon NOT used here;
+# lat_norm / lon_norm (normalized) are in GEO_FEATURES → FULL_FEATURES.
+REDUCTION_FEATURES = FULL_FEATURES  # 14 features: geo-norm + temporal + severity
+
 PCA_N_COMPONENTS = 3
 PCA_VARIANCE_TARGET = 0.70             # target: explain ≥70% variance
 PCA_SCATTER_SAMPLE = 50_000           # sample for 2D scatter plot
