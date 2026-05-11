@@ -5,12 +5,12 @@
 # PIPELINE:
 #   Step 1  : Validate normalized column names
 #   Step 2  : Remove duplicate Case Numbers
-#   Step 3  : Drop rows with null Latitude or Longitude (CRITICAL — needed for geo clustering)
+#   Step 3  : Impute null Latitude/Longitude using Beat-median coordinates
 #   Step 4  : Parse Date column → datetime
 #   Step 5  : Extract temporal features from parsed Date (Hour, Day_of_Week, Month, Year)
 #   Step 6  : Classify Season from Month
 #   Step 7  : Create Is_Weekend boolean flag
-#   Step 8  : Impute missing Beat, District, Ward, Community Area with column mode
+#   Step 8  : Impute missing District, Ward, Community Area with Beat-grouped mode
 #   Step 9  : LabelEncode Primary_Type → primary_type_code
 #   Step 10 : LabelEncode Location_Description → location_desc_code
 #   Step 11 : Cast Arrest and Domestic columns → bool
@@ -46,8 +46,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ── Column sets ─────────────────────────────────────────────
-# Administrative boundary columns — mode-imputed when null
-ADMIN_COLS = ["beat", "district", "ward", "community_area"]
+# Administrative boundary columns (beat handled separately — it's the grouping key)
+ADMIN_COLS = ["district", "ward", "community_area"]
 
 # Boolean string columns in the raw Chicago CSV
 BOOL_COLS = ["arrest", "domestic"]
@@ -109,9 +109,9 @@ def preprocess_data(
     logger.info("[2/15] Removing duplicate Case Numbers...")
     df = _remove_duplicate_cases(df)
 
-    # Step 3: Drop null coordinates (CRITICAL — before any geo work)
-    logger.info("[3/15] Dropping rows with null Latitude/Longitude...")
-    df = _drop_null_coordinates(df)
+    # Step 3: Impute null coordinates using Beat median
+    logger.info("[3/15] Imputing null Latitude/Longitude via Beat-median...")
+    df = _impute_null_coordinates(df)
 
     # Step 4: Parse Date column
     logger.info("[4/15] Parsing Date column → datetime...")
@@ -225,27 +225,48 @@ def _remove_duplicate_cases(df: pd.DataFrame) -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
-def _drop_null_coordinates(df: pd.DataFrame) -> pd.DataFrame:
+def _impute_null_coordinates(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Drop rows where Latitude or Longitude is null.
+    Impute null Latitude/Longitude using the median coordinates of the same Beat.
 
-    WHY: Geographic clustering requires valid coordinates.
-    These rows cannot be clustered and must be removed, not filled —
-    fabricating lat/lon would create false hotspots.
+    WHY Beat-median: Beat is a small patrol zone (~4-6 city blocks) and has
+    zero nulls in the dataset, making it a reliable grouping key. Placing a
+    crime at its beat's centroid is a valid approximation for clustering —
+    far better than dropping 1.1% of records outright.
+
+    Fallback: if a beat has no non-null coordinates (extremely rare), the
+    overall dataset median is used.
     """
-    before = len(df)
-    df = df.dropna(subset=["latitude", "longitude"])
-    removed = before - len(df)
+    null_mask = df["latitude"].isnull() | df["longitude"].isnull()
+    null_count = int(null_mask.sum())
 
-    if removed > 0:
-        pct = removed / before * 100
-        logger.info(
-            f"  Dropped {removed:,} rows with null coordinates "
-            f"({pct:.1f}%) ✓"
-        )
-    else:
+    if null_count == 0:
         logger.info("  No null coordinates found ✓")
+        return df
 
+    # Compute median lat/lon per beat from non-null rows only
+    beat_medians = (
+        df.loc[~null_mask]
+        .groupby("beat")[["latitude", "longitude"]]
+        .median()
+    )
+
+    for col in ["latitude", "longitude"]:
+        null_idx = df.index[df[col].isnull()]
+        df.loc[null_idx, col] = df.loc[null_idx, "beat"].map(beat_medians[col])
+
+    # Fallback: overall median for any beats with no reference coords
+    still_null = int(df["latitude"].isnull().sum())
+    if still_null > 0:
+        df["latitude"] = df["latitude"].fillna(df["latitude"].median())
+        df["longitude"] = df["longitude"].fillna(df["longitude"].median())
+        logger.warning(
+            f"  {still_null:,} rows used overall median (beat had no coords)"
+        )
+
+    logger.info(
+        f"  Imputed {null_count:,} null coordinates using Beat-median ✓"
+    )
     return df.reset_index(drop=True)
 
 
@@ -345,24 +366,49 @@ def _create_is_weekend(df: pd.DataFrame) -> pd.DataFrame:
 
 def _impute_admin_boundaries(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Fill null values in Beat, District, Ward, Community Area using column mode.
+    Fill null District, Ward, Community Area using Beat-grouped mode.
 
-    WHY mode imputation: These are categorical ID codes (not continuous values).
-    The most common value is the best substitute when the actual value is unknown.
+    WHY Beat as grouping key: Beat is the most granular admin unit, has zero
+    nulls, and is a subdivision of District/Ward/Community Area — so the most
+    common value within a beat is almost always the correct answer.
+    Fallback to global mode for any beats with no non-null reference.
+    Beat itself (rare nulls) uses global mode.
     """
-    for col in ADMIN_COLS:
+    # Beat: global mode fallback (it has very few or zero nulls)
+    if "beat" in df.columns:
+        null_count = int(df["beat"].isnull().sum())
+        if null_count > 0:
+            mode_val = df["beat"].mode().iloc[0]
+            df["beat"] = df["beat"].fillna(mode_val)
+            logger.info(f"  {'beat':20}: {null_count:,} nulls → global mode {mode_val} ✓")
+        else:
+            logger.info(f"  {'beat':20}: no nulls ✓")
+
+    # District, Ward, Community Area: Beat-grouped mode
+    for col in ["district", "ward", "community_area"]:
         if col not in df.columns:
             continue
-        null_count = df[col].isnull().sum()
+        null_count = int(df[col].isnull().sum())
         if null_count == 0:
             logger.info(f"  {col:20}: no nulls ✓")
             continue
 
-        mode_val = df[col].mode().iloc[0]
-        df[col] = df[col].fillna(mode_val)
-        logger.info(
-            f"  {col:20}: {null_count:,} nulls → mode {mode_val} ✓"
+        beat_mode = (
+            df.groupby("beat")[col]
+            .agg(lambda x: x.mode().iloc[0] if x.notna().any() else np.nan)
         )
+        df[col] = df[col].fillna(df["beat"].map(beat_mode))
+
+        # Fallback: global mode for any beats that had all-null values
+        still_null = int(df[col].isnull().sum())
+        if still_null > 0:
+            global_mode = df[col].mode().iloc[0]
+            df[col] = df[col].fillna(global_mode)
+            logger.warning(
+                f"  {col}: {still_null:,} used global mode fallback → {global_mode}"
+            )
+
+        logger.info(f"  {col:20}: {null_count:,} nulls → Beat-grouped mode ✓")
 
     return df
 
