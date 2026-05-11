@@ -1,0 +1,8 @@
+{
+  "n_clusters": 6,
+  "noise_count": 1872,
+  "noise_fraction": 0.038306,
+  "eps": 0.008,
+  "min_samples": 100,
+  "silhouette": -0.128165
+}
