@@ -90,7 +90,7 @@ def save_fig(name: str) -> None:
     path = DOCS_FIGURES_DIR / name
     plt.savefig(path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"   ✓ Saved: {name}")
+    print(f"   Saved: {name}")
 
 
 # ================================================================
@@ -139,7 +139,7 @@ else:
     csv_path = PROCESSED_CSV
 
 if not csv_path.exists():
-    print(f"\n✗ Processed data not found: {csv_path}")
+    print(f"\nERROR: Processed data not found: {csv_path}")
     print("  Run notebooks/01_data_acquisition.py first.")
     sys.exit(1)
 
@@ -159,7 +159,7 @@ for col in ['Hour', 'Day_of_Week', 'Month', 'Year']:
         df[col] = pd.to_numeric(df[col], errors='coerce')
 
 total = len(df)
-print(f"✓ Loaded: {total:,} rows × {df.shape[1]} columns")
+print(f"Loaded: {total:,} rows x {df.shape[1]} columns")
 print(f"  Memory : {df.memory_usage(deep=True).sum() / 1024**2:.1f} MB")
 
 # ── Compute Crime_Severity_Score inline for EDA ───────────────
@@ -174,7 +174,7 @@ SCATTER_N = min(20_000, total)
 df_scatter = df.sample(SCATTER_N, random_state=RANDOM_STATE)
 
 print(f"  Crime types : {df['primary_type'].nunique()}")
-print(f"  Year range  : {int(df['Year'].min())} – {int(df['Year'].max())}")
+print(f"  Year range  : {int(df['Year'].min())} - {int(df['Year'].max())}")
 print(f"  Arrest rate : {df['arrest'].mean()*100:.1f}%")
 print(f"  Domestic %  : {df['domestic'].mean()*100:.1f}%")
 print("=" * 65)
@@ -183,7 +183,7 @@ print("=" * 65)
 # ================================================================
 # CHART 1: CRIME TYPE DISTRIBUTION
 # ================================================================
-print("\n📊 Chart 1: Crime Type Distribution...")
+print("\n[Chart 1] Crime Type Distribution...")
 
 crime_counts = df['primary_type'].value_counts()
 top15        = crime_counts.head(15)
@@ -252,7 +252,7 @@ save_fig('02_crime_type_distribution.png')
 # ================================================================
 # CHART 2: GEOGRAPHIC CRIME PATTERNS
 # ================================================================
-print("\n📊 Chart 2: Geographic Crime Patterns...")
+print("\n[Chart 2] Geographic Crime Patterns...")
 
 fig, axes = plt.subplots(2, 2, figsize=(18, 14))
 fig.suptitle('Geographic Crime Distribution — Chicago', y=0.98)
@@ -333,7 +333,7 @@ save_fig('02_geographic_scatter.png')
 # ================================================================
 # CHART 3: HOURLY CRIME HEATMAP (centerpiece visualization)
 # ================================================================
-print("\n📊 Chart 3: Hourly Crime Heatmap...")
+print("\n[Chart 3] Hourly Crime Heatmap...")
 
 # Pivot: rows = Day_of_Week (0-6), columns = Hour (0-23)
 pivot = (
@@ -414,7 +414,7 @@ save_fig('02_hourly_heatmap.png')
 # ================================================================
 # CHART 4: MONTHLY & SEASONAL TRENDS
 # ================================================================
-print("\n📊 Chart 4: Monthly & Seasonal Trends...")
+print("\n[Chart 4] Monthly & Seasonal Trends...")
 
 fig, axes = plt.subplots(2, 2, figsize=(18, 13))
 fig.suptitle('Crime Temporal Patterns — Monthly & Seasonal', y=0.98)
@@ -424,16 +424,18 @@ monthly_by_year = df.groupby(['Year', 'Month']).size().reset_index(name='count')
 # Average monthly profile across all years
 monthly_avg = monthly_by_year.groupby('Month')['count'].mean()
 
-axes[0, 0].bar(range(1, 13), monthly_avg.values,
+actual_months = monthly_avg.index  # only months present in data (FAST_MODE may have < 12)
+month_labels  = [MONTH_NAMES[m - 1] for m in actual_months]
+axes[0, 0].bar(actual_months, monthly_avg.values,
                color=AC[3], edgecolor='white', alpha=0.88, width=0.75)
-axes[0, 0].plot(range(1, 13), monthly_avg.values,
+axes[0, 0].plot(actual_months, monthly_avg.values,
                 color=DARK, linewidth=2.0, marker='o',
                 markersize=5, zorder=3, label='Avg crime count')
 axes[0, 0].set_title('Average Monthly Crime Count\n(across all sampled years)')
 axes[0, 0].set_xlabel('Month')
 axes[0, 0].set_ylabel('Avg Crime Count')
-axes[0, 0].set_xticks(range(1, 13))
-axes[0, 0].set_xticklabels(MONTH_NAMES, rotation=45)
+axes[0, 0].set_xticks(actual_months)
+axes[0, 0].set_xticklabels(month_labels, rotation=45)
 axes[0, 0].legend()
 peak_month = int(monthly_avg.idxmax())
 axes[0, 0].annotate(
@@ -502,7 +504,7 @@ save_fig('02_monthly_trend.png')
 # ================================================================
 # CHART 5: ARREST RATE ANALYSIS
 # ================================================================
-print("\n📊 Chart 5: Arrest Rate Analysis...")
+print("\n[Chart 5] Arrest Rate Analysis...")
 
 fig, axes = plt.subplots(2, 2, figsize=(18, 13))
 fig.suptitle('Arrest Rate Analysis', y=0.98)
@@ -610,7 +612,7 @@ save_fig('02_arrest_rates.png')
 # ================================================================
 # CHART 6: DOMESTIC INCIDENT ANALYSIS
 # ================================================================
-print("\n📊 Chart 6: Domestic Incident Analysis...")
+print("\n[Chart 6] Domestic Incident Analysis...")
 
 dom_df  = df[df['domestic'] == True]
 ndom_df = df[df['domestic'] == False]
@@ -722,7 +724,7 @@ save_fig('02_domestic_breakdown.png')
 # ================================================================
 # CHART 7: CRIME SEVERITY DISTRIBUTION
 # ================================================================
-print("\n📊 Chart 7: Crime Severity Distribution...")
+print("\n[Chart 7] Crime Severity Distribution...")
 
 # Define severity bands for analysis
 SEV_BANDS = {
@@ -858,15 +860,15 @@ print(f"""
 {_sep}
 
 PALETTE USED:
-  Binary comparisons   → Dark2_r  (orange-red vs teal-green)
-  Crime type bars      → tab20    (20 distinct colors)
-  Category comparisons → Paired_r (multi-hue)
-  Histograms           → Accent_r (one color per feature)
-  Heatmaps             → YlOrRd   (yellow=low, red=high risk)
+  Binary comparisons   : Dark2_r  (orange-red vs teal-green)
+  Crime type bars      : tab20    (20 distinct colors)
+  Category comparisons : Paired_r (multi-hue)
+  Histograms           : Accent_r (one color per feature)
+  Heatmaps             : YlOrRd   (yellow=low, red=high risk)
 
 KDE METHOD: scipy gaussian_kde (direct x/y arrays)
-  → No seaborn internal line reference bugs
-  → All density fills clipped to valid x range
+  - No seaborn internal line reference bugs
+  - All density fills clipped to valid x range
 
 SAVED TO: docs/figures/
   02_crime_type_distribution.png
