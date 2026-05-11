@@ -4,7 +4,6 @@
 # version:  1.0
 
 # ── Cell 1: Setup ────────────────────────────────────────────
-import gc
 import json
 import logging
 import sys
@@ -28,7 +27,7 @@ from config import (
     SAMPLE_METADATA,
     SAMPLE_SIZE,
 )
-from src.data.loader import load_raw_csv, sample_recent_records, save_processed
+from src.data.loader import load_raw_csv, save_processed
 from src.data.preprocessor import preprocess_data
 
 logging.basicConfig(
@@ -65,45 +64,36 @@ print(f"File size : {RAW_PATH.stat().st_size / 1024**3:.2f} GB")
 print(f"Exists    : {RAW_PATH.exists()}")
 
 
-# ── Cell 3: STEP 1 — Load raw CSV ────────────────────────────
-print("\nSTEP 1: Loading raw data...")
+# ── Cell 3: STEP 1+3 — Stream-load + sample (single pass, no OOM) ──
+print(f"\nSTEP 1: Streaming {SAMPLE_N:,} most-recent records from raw CSV...")
 print("-" * 55)
+print("(chunked load — avoids OOM on 2.2 GB file)")
 
-df_raw = load_raw_csv(RAW_PATH, validate=True)
-print(f"Raw data shape : {df_raw.shape}")
+df_sample = load_raw_csv(RAW_PATH, validate=True, n_recent=SAMPLE_N)
+sample_rows = len(df_sample)
+print(f"Loaded shape : {df_sample.shape}")
 
 
-# ── Cell 4: STEP 2 — Pre-cleaning snapshot ───────────────────
-print("\nSTEP 2: Pre-cleaning snapshot...")
+# ── Cell 4: STEP 2 — Sample snapshot (pre-preprocessing) ────────
+print("\nSTEP 2: Sample snapshot (streaming-sampled, before preprocessing)...")
 print("-" * 55)
+# Note: pre_rows is the sample count (50K FAST_MODE / 500K production).
+# Full raw dataset = 8.5M rows — not loaded into memory.
 
-pre_rows = len(df_raw)
-pre_nulls = df_raw.isnull().sum().sum()
-pre_duplicates = df_raw.duplicated(subset=["case_number"]).sum()
+pre_rows = len(df_sample)
+pre_nulls = df_sample.isnull().sum().sum()
+pre_duplicates = df_sample.duplicated(subset=["case_number"]).sum()
 
 print(f"Rows        : {pre_rows:,}")
 print(f"Total nulls : {pre_nulls:,}")
 print(f"Duplicates  : {pre_duplicates:,} (by case_number)")
 
 print("\nNull breakdown:")
-null_breakdown = df_raw.isnull().sum()
+null_breakdown = df_sample.isnull().sum()
 null_breakdown = null_breakdown[null_breakdown > 0].sort_values(ascending=False)
 for col, count in null_breakdown.items():
     pct = count / pre_rows * 100
     print(f"  {col:25}: {count:>7,} ({pct:.1f}%)")
-
-
-# ── Cell 5: STEP 3 — Sample most-recent records ──────────────
-print(f"\nSTEP 3: Sampling {SAMPLE_N:,} most-recent records...")
-print("-" * 55)
-
-df_sample = sample_recent_records(df_raw, n=SAMPLE_N)
-sample_rows = len(df_sample)   # actual count — may differ from SAMPLE_N
-print(f"Sample shape : {df_sample.shape}")
-
-del df_raw
-gc.collect()
-print("Raw DataFrame freed from memory.")
 
 
 # ── Cell 6: Post-sample stats ────────────────────────────────

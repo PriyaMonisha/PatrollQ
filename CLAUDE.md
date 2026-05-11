@@ -38,9 +38,9 @@ for reference files before writing any code.
 ---
 
 ## Current Status
-**Active Section:** Section 1b complete — ready for Section 2
-**Last Working File:** CLAUDE_CONTEXT.md, PROJECT_KICKOFF_CHECKLIST.md
-**Last Decision Made:** FAST_MODE added to config.py; .gitignore anchored; CLAUDE_CONTEXT.md + PROJECT_KICKOFF_CHECKLIST.md tuned from EMI lessons
+**Active Section:** Section 5 — Geographic Clustering
+**Last Working File:** notebooks/00_data_cleaning.py, src/data/preprocessor.py, notebooks/initial_analysing.ipynb
+**Last Decision Made:** Beat-median imputation for null lat/lon (instead of drop); Beat-grouped mode for Ward/Community Area; sparse notebook numbering kept (gap at 02_ is intentional)
 
 ---
 
@@ -50,18 +50,19 @@ for reference files before writing any code.
 - [x] Section 0: .claude/ agent, command, rules files (commit 7e4309d)
 - [x] Section 1: config.py, requirements.txt, .gitignore, .env.example, CLAUDE.md, git init
 - [x] Section 1b: FAST_MODE in config.py, anchored .gitignore, CLAUDE_CONTEXT.md, PROJECT_KICKOFF_CHECKLIST.md
+- [x] Section 2: src/data/loader.py, src/data/preprocessor.py, notebooks/01_data_acquisition.py (commit 1f9fd97)
+- [x] Section 2b: notebooks/00_data_cleaning.py (full pipeline script), notebooks/initial_analysing.ipynb (exploratory analysis), preprocessor Beat-median imputation (commit d8046de)
+- [x] Section 3: notebooks/03_eda.py — 7 charts committed (commit 8f9675c) ⚠️ unverified — needs data file
+- [x] Section 4: src/features/engineer.py, notebooks/04_feature_engineering.py (commit 3fb59df) ⚠️ unverified — needs data file
 
 ### In Progress 🔄
-(none — ready for Section 2)
+- [ ] Run notebooks/00_data_cleaning.py → generate data/processed/chicago_crime_500k.csv.gz (REQUIRED before any model section)
 
 ### Remaining 📋
-- [ ] Section 2: src/data/loader.py, src/data/preprocessor.py, notebooks/01_data_acquisition.py
-- [ ] Section 3: notebooks/02_eda.py + docs/figures/
-- [ ] Section 4: src/features/engineer.py, notebooks/03_feature_engineering.py
-- [ ] Section 5: src/models/geographic_clustering.py, notebooks/04_geographic_clustering.py
-- [ ] Section 6: src/models/temporal_clustering.py, notebooks/05_temporal_clustering.py
-- [ ] Section 7: src/models/dimensionality_reduction.py, notebooks/06_dimensionality_reduction.py
-- [ ] Section 8: src/utils/helpers.py, scripts/run_full_pipeline.py, notebooks/07_mlflow_experiments.py
+- [ ] Section 5: src/models/geographic_clustering.py, notebooks/05_geographic_clustering.py
+- [ ] Section 6: src/models/temporal_clustering.py, notebooks/06_temporal_clustering.py
+- [ ] Section 7: src/models/dimensionality_reduction.py, notebooks/07_dimensionality_reduction.py
+- [ ] Section 8: src/utils/helpers.py, scripts/run_full_pipeline.py, notebooks/08_mlflow_experiments.py
 - [ ] Section 9: streamlit_app.py, pages/1–5
 - [ ] Section 10: Dockerfile, docker-compose.yml, .github/workflows/ci.yml
 

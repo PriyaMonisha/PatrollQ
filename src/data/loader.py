@@ -2,6 +2,7 @@
 # purpose:  Chicago crime data loading, sampling, validation, and saving for PatrolIQ
 # version:  1.0
 
+import gc
 import json
 import logging
 from datetime import datetime
@@ -40,22 +41,34 @@ NORMALIZED_COLUMNS = [
 # PUBLIC API
 # ═══════════════════════════════════════════════════════════
 
-def load_raw_csv(path: Path, validate: bool = True) -> pd.DataFrame:
+def load_raw_csv(
+    path: Path,
+    validate: bool = True,
+    chunksize: int = 200_000,
+    n_recent: Optional[int] = None,
+) -> pd.DataFrame:
     """
-    Load Chicago crime CSV and normalize column names to snake_case.
+    Load Chicago crime CSV in chunks to avoid OOM on large files.
+
+    If n_recent is set, streams only the N most-recent rows by date
+    (peak RAM ≈ 3 × n_recent rows instead of 8.5M rows).
 
     Steps:
       1. Verify file exists and is .csv or .csv.gz
       2. Log file size
-      3. Load with UTF-8 encoding (fallback to latin-1)
-      4. Check DataFrame is not empty
-      5. Normalize column names to snake_case
-      6. Optionally validate schema and row count
-      7. Log load summary
+      3. Stream-read in chunks of chunksize rows
+         - Normalize column names per chunk
+         - Parse 'date' column per chunk (explicit format, 3× faster)
+         - If n_recent: prune pool after every chunk to bound memory
+      4. Concatenate chunks and optionally take top-N by date
+      5. Optionally validate schema and row count
+      6. Log load summary
 
     Args:
-        path:     Path to raw CSV or .csv.gz file
-        validate: Run schema and minimum row count checks
+        path:      Path to raw CSV or .csv.gz file
+        validate:  Run schema and minimum row count checks
+        chunksize: Rows per chunk (default 200K ≈ 150 MB/chunk)
+        n_recent:  If set, return only the N most-recent rows
 
     Returns:
         Raw DataFrame with snake_case column names
@@ -87,35 +100,71 @@ def load_raw_csv(path: Path, validate: bool = True) -> pd.DataFrame:
         raise ValueError(f"✗ File is empty (0 bytes): {path}")
     logger.info(f"File: {path.name} | Size: {file_size_mb:.1f} MB")
 
-    # ── Step 3: Load CSV ─────────────────────────────────────
-    # pandas auto-detects .csv.gz and decompresses transparently
-    logger.info(f"Loading: {path} ...")
+    # ── Step 3: Chunked streaming load ───────────────────────
+    mode = f"n_recent={n_recent:,}" if n_recent else "full load"
+    logger.info(f"Loading in chunks (chunksize={chunksize:,}, {mode})...")
+
+    pool: list[pd.DataFrame] = []
+
     try:
-        df = pd.read_csv(path, encoding="utf-8", low_memory=False)
+        reader = pd.read_csv(
+            path, encoding="utf-8", low_memory=False,
+            chunksize=chunksize, on_bad_lines="warn",
+        )
     except UnicodeDecodeError:
         logger.warning("UTF-8 failed — retrying with latin-1 encoding")
-        df = pd.read_csv(path, encoding="latin-1", low_memory=False)
+        reader = pd.read_csv(
+            path, encoding="latin-1", low_memory=False,
+            chunksize=chunksize, on_bad_lines="warn",
+        )
 
-    # ── Step 4: Empty check ──────────────────────────────────
+    try:
+        for i, chunk in enumerate(reader):
+            # Normalize columns immediately (per-chunk, not after full load)
+            chunk.columns = (
+                chunk.columns
+                .str.strip()
+                .str.lower()
+                .str.replace(" ", "_", regex=False)
+            )
+            # Parse date in-place — explicit format is 3× faster than 'mixed'
+            # Chicago crime portal format: MM/DD/YYYY HH:MM:SS AM/PM
+            chunk["date"] = pd.to_datetime(
+                chunk["date"],
+                format="%m/%d/%Y %I:%M:%S %p",
+                errors="coerce",
+            )
+            pool.append(chunk)
+
+            # Prune after every chunk when sampling — keeps peak memory bounded
+            if n_recent and len(pool) > 1:
+                combined = pd.concat(pool, ignore_index=True)
+                pool = [combined.nlargest(int(n_recent * 3), "date")]
+                del combined
+
+            if (i + 1) % 5 == 0:
+                pool_size = sum(len(c) for c in pool)
+                logger.info(f"  Chunk {i + 1} | pool: {pool_size:,} rows")
+    finally:
+        reader.close()  # always release file handle
+
+    # ── Step 4: Assemble final DataFrame ────────────────────
+    df = pd.concat(pool, ignore_index=True)
+    del pool
+    gc.collect()
+
+    if n_recent:
+        df = df.nlargest(n_recent, "date").reset_index(drop=True)
+        logger.info(f"Final sample: {len(df):,} most-recent rows")
+
     if df.empty:
         raise ValueError(f"✗ File loaded but contains no rows: {path}")
 
-    # ── Step 5: Normalize column names ───────────────────────
-    # Chicago Data Portal uses "Primary Type", "Case Number" etc.
-    # Convert to snake_case for consistent downstream access
-    df.columns = (
-        df.columns
-        .str.strip()
-        .str.lower()
-        .str.replace(" ", "_", regex=False)
-    )
-    logger.info("Column names normalized to snake_case")
-
-    # ── Step 6: Optional schema validation ───────────────────
+    # ── Step 5: Optional schema validation ───────────────────
     if validate:
         validate_schema(df)
 
-    # ── Step 7: Summary ──────────────────────────────────────
+    # ── Step 6: Summary ──────────────────────────────────────
     _log_load_summary(df, path, file_size_mb)
 
     return df
