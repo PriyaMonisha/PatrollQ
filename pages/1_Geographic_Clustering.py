@@ -44,9 +44,12 @@ model_display = st.sidebar.selectbox(
     "Clustering Algorithm",
     ["K-Means (k=8)", "DBSCAN", "Hierarchical (Ward)"],
 )
-model_key = {"K-Means (k=8)": "kmeans",
-             "DBSCAN": "dbscan",
-             "Hierarchical (Ward)": "hierarchical"}[model_display]
+_ALGO_MAP = {
+    "K-Means (k=8)":     "kmeans",
+    "DBSCAN":            "dbscan",
+    "Hierarchical (Ward)": "hierarchical",
+}
+model_key = _ALGO_MAP.get(model_display or "", "kmeans")
 
 map_sample = st.sidebar.slider(
     "Map sample size (points)", 1_000, 10_000, 5_000, step=1_000,
