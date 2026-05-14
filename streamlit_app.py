@@ -81,10 +81,13 @@ except Exception:
 
 col1, col2, col3, col4, col5 = st.columns(5)
 col1.metric("Total Crimes",  f"{n_records:,}" if isinstance(n_records, int) else n_records)
-col2.metric("Date Range",    f"{date_min} → {date_max}")
-col3.metric("Crime Types",   crime_types)
-col4.metric("Arrest Rate",   arrest_rate)
-col5.metric("Domestic %",    domestic_pct)
+# Split date range into two lines to avoid truncation
+col2.metric("Sample Start",  date_min)
+col3.metric("Sample End",    date_max)
+# crime_types from metadata = types in sample (30 in FAST_MODE); full dataset = 34
+crime_label = f"{crime_types} (of 34 total)" if FAST_MODE and crime_types != "N/A" else str(crime_types)
+col4.metric("Crime Types",   crime_label)
+col5.metric("Arrest Rate",   arrest_rate)
 
 st.divider()
 

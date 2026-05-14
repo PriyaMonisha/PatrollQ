@@ -94,9 +94,13 @@ with col1:
     st.subheader("Cluster Size Distribution")
     counts = df["cluster"].value_counts().sort_index().reset_index()
     counts.columns = ["Cluster", "Count"]
+    # Explicit colors — avoid colorscale where Cluster 0 maps to near-white
+    _CLUSTER_COLORS = ["#636EFA", "#EF553B", "#00CC96", "#AB63FA",
+                       "#FFA15A", "#19D3F3", "#FF6692", "#B6E880"]
     fig_bar = px.bar(
         counts, x="Cluster", y="Count",
-        color="Count", color_continuous_scale="Blues",
+        color="Cluster",
+        color_discrete_sequence=_CLUSTER_COLORS,
         title="Crime Count per Temporal Cluster",
     )
     fig_bar.update_layout(showlegend=False, height=300)
@@ -109,7 +113,13 @@ with col2:
         .size()
         .reset_index(name="count")
     )
-    wknd["Day Type"] = wknd["Is_Weekend"].map({True: "Weekend", False: "Weekday"})
+    # Is_Weekend may be string "True"/"False" after CSV round-trip — handle both
+    wknd["Day Type"] = (
+        wknd["Is_Weekend"]
+        .astype(str).str.strip().str.lower()
+        .map({"true": "Weekend", "false": "Weekday", "1": "Weekend", "0": "Weekday"})
+    )
+    wknd = wknd.dropna(subset=["Day Type"])
     fig_wk = px.bar(
         wknd, x="cluster", y="count", color="Day Type",
         barmode="group",
