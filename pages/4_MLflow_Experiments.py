@@ -16,13 +16,13 @@ from config import MLFLOW_EXPORTS_DIR
 st.set_page_config(page_title="MLflow Experiments — PatrolIQ",
                    page_icon="📈", layout="wide")
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_all_runs() -> list:
     path = MLFLOW_EXPORTS_DIR / "all_runs.json"
     with open(path) as f:
         return json.load(f)
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_best_models() -> dict:
     path = MLFLOW_EXPORTS_DIR / "best_models.json"
     with open(path) as f:

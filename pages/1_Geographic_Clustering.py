@@ -21,13 +21,20 @@ st.set_page_config(page_title="Geographic Clustering — PatrolIQ",
                    page_icon="🗺️", layout="wide")
 
 # ── Data loaders ──────────────────────────────────────────────
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_labels(model_key: str) -> pd.DataFrame:
-    return pd.read_csv(GEO_DIR / f"{model_key}_labels.csv")
+    path = GEO_DIR / f"{model_key}_labels.csv"
+    if not path.exists():
+        st.error(f"Artifact missing: {path.name}. Run scripts/run_full_pipeline.py first.")
+        st.stop()
+    return pd.read_csv(path)
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_metrics(model_key: str) -> dict:
     path = GEO_DIR / f"{model_key}_metrics.json"
+    if not path.exists():
+        st.error(f"Artifact missing: {path.name}. Run scripts/run_full_pipeline.py first.")
+        st.stop()
     with open(path) as f:
         return json.load(f)
 

@@ -19,7 +19,7 @@ TEMP_DIR = ARTIFACTS_DIR / "temporal"
 st.set_page_config(page_title="Temporal Clustering — PatrolIQ",
                    page_icon="⏰", layout="wide")
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_temporal_data() -> pd.DataFrame:
     """Load temporal labels joined with Hour from feature CSV."""
     labels = pd.read_csv(TEMP_DIR / "kmeans_labels.csv")   # row_idx + cluster
@@ -32,7 +32,7 @@ def load_temporal_data() -> pd.DataFrame:
     labels["Is_Weekend"] = hours["Is_Weekend"].values[:len(labels)]
     return labels
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_metrics() -> dict:
     with open(TEMP_DIR / "kmeans_metrics.json") as f:
         return json.load(f)

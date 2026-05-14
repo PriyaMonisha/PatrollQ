@@ -20,30 +20,30 @@ TMP_DIR = ARTIFACTS_DIR / "temporal"
 st.set_page_config(page_title="Dimensionality Reduction — PatrolIQ",
                    page_icon="📊", layout="wide")
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_pca_2d() -> pd.DataFrame:
     return pd.read_csv(DIM_DIR / "pca_2d.csv")
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_pca_metrics() -> dict:
     with open(DIM_DIR / "pca_metrics.json") as f:
         return json.load(f)
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_tsne_2d() -> pd.DataFrame:
     return pd.read_csv(DIM_DIR / "tsne_2d.csv")
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_tsne_metrics() -> dict:
     with open(DIM_DIR / "tsne_metrics.json") as f:
         return json.load(f)
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_geo_labels() -> pd.Series:
     df = pd.read_csv(GEO_DIR / "kmeans_labels.csv")
     return df["cluster"]
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_temp_labels() -> pd.Series:
     df = pd.read_csv(TMP_DIR / "kmeans_labels.csv")
     return df["cluster"]
