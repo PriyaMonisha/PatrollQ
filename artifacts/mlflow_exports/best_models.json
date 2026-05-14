@@ -1,0 +1,20 @@
+{
+  "geo_kmeans": {
+    "run_id": "0eef9ce73cb141ff9d4137451ec20fca",
+    "silhouette": 0.41148,
+    "n_clusters": 8,
+    "experiment": "patroliq_geographic_clustering"
+  },
+  "temporal_kmeans": {
+    "run_id": "44eb71685d95448ab172cb2584e9d1ec",
+    "silhouette": 0.257612,
+    "n_clusters": 4,
+    "experiment": "patroliq_temporal_clustering"
+  },
+  "pca": {
+    "run_id": "a1a103e9b3b64b1dab5642bb6b765944",
+    "cumulative_variance": 0.359209,
+    "n_components": 3,
+    "experiment": "patroliq_dimensionality_reduction"
+  }
+}

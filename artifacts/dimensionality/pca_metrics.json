@@ -1,0 +1,13 @@
+{
+  "explained_variance_ratio": [
+    0.132951,
+    0.120873,
+    0.105385
+  ],
+  "cumulative_variance": 0.359209,
+  "n_components": 3,
+  "variance_target": 0.7,
+  "variance_target_met": false,
+  "n_samples": 48870,
+  "scatter_sample_size": 48870
+}

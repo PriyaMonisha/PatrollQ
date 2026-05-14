@@ -1,0 +1,291 @@
+[
+  {
+    "run_id": "a1a103e9b3b64b1dab5642bb6b765944",
+    "run_name": "pca",
+    "experiment": "patroliq_dimensionality_reduction",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 15:07:55.220000+00:00",
+    "metrics": {
+      "explained_variance_pc2": 0.120873,
+      "cumulative_variance": 0.359209,
+      "explained_variance_pc3": 0.105385,
+      "explained_variance_pc1": 0.132951,
+      "variance_target_met": 0.0
+    },
+    "params": {
+      "fast_mode": "True",
+      "n_features": "14",
+      "n_samples": "48870",
+      "variance_target": "0.7"
+    }
+  },
+  {
+    "run_id": "05d8d1f44a0f4ef2b6cba55f67bb3aa5",
+    "run_name": "tsne",
+    "experiment": "patroliq_dimensionality_reduction",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 15:07:58.132000+00:00",
+    "metrics": {
+      "n_iter": 1000.0,
+      "pca_preprocess_n": 14.0,
+      "kl_divergence": 1.307703,
+      "n_subsample": 5000.0,
+      "pca_variance_retained": 1.0,
+      "perplexity": 30.0
+    },
+    "params": {
+      "n_subsample": "5000",
+      "n_iter": "1000",
+      "perplexity": "30",
+      "fast_mode": "True"
+    }
+  },
+  {
+    "run_id": "0dc98e9716de4c5c806cc7876346b394",
+    "run_name": "geo_dbscan",
+    "experiment": "patroliq_geographic_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:09:19.146000+00:00",
+    "metrics": {
+      "silhouette": -0.128165,
+      "n_clusters": 6.0,
+      "noise_fraction": 0.038306
+    },
+    "params": {
+      "n_samples": "48870",
+      "eps": "0.008",
+      "min_samples": "100"
+    }
+  },
+  {
+    "run_id": "6a611ac359cb4ef8a6d1c98d565c5b27",
+    "run_name": "geo_dbscan",
+    "experiment": "patroliq_geographic_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:08:11.467000+00:00",
+    "metrics": {
+      "silhouette": -0.128165,
+      "n_clusters": 6.0,
+      "noise_fraction": 0.038306
+    },
+    "params": {
+      "n_samples": "48870",
+      "eps": "0.008",
+      "min_samples": "100"
+    }
+  },
+  {
+    "run_id": "bd1a3f064c9a4fed8588629af492eacb",
+    "run_name": "geo_elbow",
+    "experiment": "patroliq_geographic_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:09:09.315000+00:00",
+    "metrics": {
+      "best_k_silhouette": 2.0,
+      "silhouette_k2": 0.510041,
+      "silhouette_k5": 0.398869,
+      "silhouette_k4": 0.392243,
+      "silhouette_k3": 0.424656
+    },
+    "params": {
+      "n_samples": "48870",
+      "fast_mode": "True",
+      "k_range": "2-5"
+    }
+  },
+  {
+    "run_id": "65e0040f8e794a39a8afa6d652df8bf5",
+    "run_name": "geo_elbow",
+    "experiment": "patroliq_geographic_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:08:01.164000+00:00",
+    "metrics": {
+      "best_k_silhouette": 2.0,
+      "silhouette_k2": 0.510041,
+      "silhouette_k5": 0.398869,
+      "silhouette_k4": 0.392243,
+      "silhouette_k3": 0.424656
+    },
+    "params": {
+      "n_samples": "48870",
+      "fast_mode": "True",
+      "k_range": "2-5"
+    }
+  },
+  {
+    "run_id": "9d7e4334c5b1463d97362d21bb6f533f",
+    "run_name": "geo_elbow",
+    "experiment": "patroliq_geographic_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:07:03.294000+00:00",
+    "metrics": {
+      "best_k_silhouette": 2.0,
+      "silhouette_k2": 0.510041,
+      "silhouette_k5": 0.398869,
+      "silhouette_k4": 0.392243,
+      "silhouette_k3": 0.424656
+    },
+    "params": {
+      "n_samples": "48870",
+      "fast_mode": "True",
+      "k_range": "2-5"
+    }
+  },
+  {
+    "run_id": "45fba08f6d6642029b71ebc2b52aced5",
+    "run_name": "geo_hierarchical",
+    "experiment": "patroliq_geographic_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:09:21.350000+00:00",
+    "metrics": {
+      "silhouette": 0.340857,
+      "davies_bouldin": 0.881331
+    },
+    "params": {
+      "n_clusters": "8",
+      "subsample": "10000",
+      "linkage": "ward"
+    }
+  },
+  {
+    "run_id": "fe59feb315e74722a21a4f3dac575eb6",
+    "run_name": "geo_hierarchical",
+    "experiment": "patroliq_geographic_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:08:14.073000+00:00",
+    "metrics": {
+      "silhouette": 0.340857,
+      "davies_bouldin": 0.881331
+    },
+    "params": {
+      "n_clusters": "8",
+      "subsample": "10000",
+      "linkage": "ward"
+    }
+  },
+  {
+    "run_id": "0eef9ce73cb141ff9d4137451ec20fca",
+    "run_name": "geo_kmeans",
+    "experiment": "patroliq_geographic_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:09:15.331000+00:00",
+    "metrics": {
+      "silhouette": 0.41148,
+      "davies_bouldin": 0.778415,
+      "inertia": 51.13
+    },
+    "params": {
+      "n_samples": "48870",
+      "random_state": "42",
+      "k": "8"
+    }
+  },
+  {
+    "run_id": "20d8bdc1f3d745b69e82cc0443dd8fd0",
+    "run_name": "geo_kmeans",
+    "experiment": "patroliq_geographic_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:08:07.491000+00:00",
+    "metrics": {
+      "silhouette": 0.41148,
+      "davies_bouldin": 0.778415,
+      "inertia": 51.13
+    },
+    "params": {
+      "n_samples": "48870",
+      "random_state": "42",
+      "k": "8"
+    }
+  },
+  {
+    "run_id": "24f8943ae907450182a8ab513f949bdc",
+    "run_name": "geo_kmeans",
+    "experiment": "patroliq_geographic_clustering",
+    "status": "FAILED",
+    "start_time": "2026-05-11 14:07:11.688000+00:00",
+    "metrics": {},
+    "params": {
+      "n_samples": "48870",
+      "random_state": "42",
+      "k": "8"
+    }
+  },
+  {
+    "run_id": "1f3526e390434d1681815c3aee4da145",
+    "run_name": "temporal_elbow",
+    "experiment": "patroliq_temporal_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:58:09.103000+00:00",
+    "metrics": {
+      "inertia_k3": 69305.09,
+      "inertia_k4": 60126.72,
+      "best_k_by_silhouette": 4.0,
+      "silhouette_k2": 0.233394,
+      "inertia_k2": 87470.08,
+      "silhouette_k4": 0.257612,
+      "silhouette_k3": 0.256093
+    },
+    "params": {
+      "n_samples": "48870",
+      "n_features": "7",
+      "fast_mode": "True"
+    }
+  },
+  {
+    "run_id": "e675c0d1d4994280adbb23eacfd1f9d9",
+    "run_name": "temporal_elbow",
+    "experiment": "patroliq_temporal_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:57:14.577000+00:00",
+    "metrics": {
+      "inertia_k3": 69305.09,
+      "inertia_k4": 60126.72,
+      "best_k_by_silhouette": 4.0,
+      "silhouette_k2": 0.233394,
+      "inertia_k2": 87470.08,
+      "silhouette_k4": 0.257612,
+      "silhouette_k3": 0.256093
+    },
+    "params": {
+      "n_samples": "48870",
+      "n_features": "7",
+      "fast_mode": "True"
+    }
+  },
+  {
+    "run_id": "44eb71685d95448ab172cb2584e9d1ec",
+    "run_name": "temporal_kmeans",
+    "experiment": "patroliq_temporal_clustering",
+    "status": "FINISHED",
+    "start_time": "2026-05-11 14:58:11.999000+00:00",
+    "metrics": {
+      "n_clusters": 4.0,
+      "davies_bouldin": 1.446569,
+      "n_samples": 48870.0,
+      "silhouette": 0.257612,
+      "inertia": 60126.72
+    },
+    "params": {
+      "n_samples": "48870",
+      "n_init": "10",
+      "features": "['hour_sin', 'hour_cos', 'day_sin', 'day_cos', 'month_sin', 'month_cos', 'Is_Weekend']",
+      "random_state": "42",
+      "k": "4"
+    }
+  },
+  {
+    "run_id": "57aa13e7c60341649daac6e838fcc89f",
+    "run_name": "temporal_kmeans",
+    "experiment": "patroliq_temporal_clustering",
+    "status": "FAILED",
+    "start_time": "2026-05-11 14:57:21.482000+00:00",
+    "metrics": {},
+    "params": {
+      "n_samples": "48870",
+      "n_init": "10",
+      "features": "['hour_sin', 'hour_cos', 'day_sin', 'day_cos', 'month_sin', 'month_cos', 'Is_Weekend']",
+      "random_state": "42",
+      "k": "4"
+    }
+  }
+]

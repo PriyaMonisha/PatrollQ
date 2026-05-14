@@ -1,0 +1,8 @@
+{
+  "model": "kmeans_temporal",
+  "n_clusters": 4,
+  "silhouette": 0.257612,
+  "davies_bouldin": 1.446569,
+  "inertia": 60126.72,
+  "n_samples": 48870
+}

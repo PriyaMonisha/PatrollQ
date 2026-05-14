@@ -1,0 +1,8 @@
+{
+  "n_subsample": 5000,
+  "perplexity": 30,
+  "n_iter": 1000,
+  "kl_divergence": 1.307703,
+  "pca_preprocess_n": 14,
+  "pca_variance_retained": 1.0
+}
