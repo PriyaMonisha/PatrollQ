@@ -38,8 +38,8 @@ for reference files before writing any code.
 ---
 
 ## Current Status
-**Active Section:** Section 8 — MLflow Experiments Export
-**Last Working File:** src/models/dimensionality_reduction.py, notebooks/07_dimensionality_reduction.py
+**Active Section:** Section 9 — Streamlit App
+**Last Working File:** src/utils/helpers.py, scripts/run_full_pipeline.py, notebooks/08_mlflow_experiments.py
 **Last Decision Made:** REDUCTION_FEATURES = FULL_FEATURES (14 engineered features, not raw lat/lon); temporal K=4 confirmed by silhouette (0.26)
 
 ---
@@ -63,6 +63,7 @@ This is checked in the Section Completion Checklist below. Do NOT skip.
 - [x] Section 5: src/models/geographic_clustering.py, notebooks/05_geographic_clustering.py (commit 3046ebe) — K-Means sil=0.41, DBSCAN noise=3.8% PASS
 - [x] Section 6: src/models/temporal_clustering.py, notebooks/06_temporal_clustering.py (commit db05bb2) — K=4 sil=0.26
 - [x] Section 7: src/models/dimensionality_reduction.py, notebooks/07_dimensionality_reduction.py (commit 89303f4) — PCA 35.9% (FAST_MODE), t-SNE KL=1.31
+- [x] Section 8: src/utils/helpers.py, scripts/run_full_pipeline.py, notebooks/08_mlflow_experiments.py (commit cb6dc56) — 16 runs exported, PatrolIQ_TemporalClustering registered
 
 ### In Progress 🔄
 (none)
