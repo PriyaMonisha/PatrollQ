@@ -11,7 +11,7 @@ import plotly.express as px
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import ARTIFACTS_DIR
+from config import ARTIFACTS_DIR, FAST_MODE
 
 DIM_DIR = ARTIFACTS_DIR / "dimensionality"
 GEO_DIR = ARTIFACTS_DIR / "geographic"
@@ -62,6 +62,11 @@ st.caption(
     "PCA and t-SNE projections of the 14-feature crime space "
     "(lat_norm, lon_norm, cyclical time encoding, severity, crime type codes)"
 )
+if FAST_MODE:
+    st.warning(
+        "**FAST_MODE ON** — PCA explains 35.9% variance (3 months of data). "
+        "Production run (500K, 4+ years) will show richer structure and higher explained variance."
+    )
 
 tab_pca, tab_tsne = st.tabs(["PCA — Principal Component Analysis", "t-SNE"])
 

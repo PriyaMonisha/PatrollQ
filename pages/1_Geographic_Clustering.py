@@ -63,7 +63,10 @@ metrics   = load_metrics(model_key)
 # ── Header + metrics ──────────────────────────────────────────
 st.title("🗺️ Geographic Crime Clustering")
 if FAST_MODE:
-    st.caption("FAST_MODE — 50K sample | Feb–Apr 2026")
+    st.warning(
+        "**FAST_MODE ON** — Results from 50K most-recent records (Feb–Apr 2026). "
+        "Set `FAST_MODE = False` in config.py and re-run pipeline for full 500K production results."
+    )
 
 m1, m2, m3 = st.columns(3)
 m1.metric("Clusters",    metrics.get("n_clusters", "N/A"))

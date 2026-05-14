@@ -44,7 +44,10 @@ metrics = load_metrics()
 # ── Header ────────────────────────────────────────────────────
 st.title("⏰ Temporal Crime Pattern Clustering")
 if FAST_MODE:
-    st.caption("FAST_MODE — 50K sample | Feb–Apr 2026")
+    st.warning(
+        "**FAST_MODE ON** — Results from 50K most-recent records (Feb–Apr 2026). "
+        "Only Spring/Winter seasons present. Set `FAST_MODE = False` for full seasonal patterns."
+    )
 
 m1, m2, m3 = st.columns(3)
 m1.metric("K (clusters)",    metrics.get("n_clusters", "N/A"))
@@ -64,7 +67,10 @@ heatmap_data = (
     .unstack(fill_value=0)
 )
 # Normalize by cluster total — shows pattern, not cluster size dominance
-heatmap_norm = heatmap_data.div(heatmap_data.sum(axis=1), axis=0)
+# replace(0, 1) guards against div-by-zero if a cluster has no crimes in FAST_MODE
+heatmap_norm = heatmap_data.div(
+    heatmap_data.sum(axis=1).replace(0, 1), axis=0
+)
 
 fig_heat = go.Figure(data=go.Heatmap(
     z=heatmap_norm.values,

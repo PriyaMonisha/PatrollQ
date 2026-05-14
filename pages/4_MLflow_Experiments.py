@@ -11,7 +11,7 @@ import plotly.express as px
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import MLFLOW_EXPORTS_DIR
+from config import FAST_MODE, MLFLOW_EXPORTS_DIR
 
 st.set_page_config(page_title="MLflow Experiments — PatrolIQ",
                    page_icon="📈", layout="wide")
@@ -19,12 +19,18 @@ st.set_page_config(page_title="MLflow Experiments — PatrolIQ",
 @st.cache_data(ttl=3600)
 def load_all_runs() -> list:
     path = MLFLOW_EXPORTS_DIR / "all_runs.json"
+    if not path.exists():
+        st.error("MLflow exports not found. Run `notebooks/08_mlflow_experiments.py` first.")
+        st.stop()
     with open(path) as f:
         return json.load(f)
 
 @st.cache_data(ttl=3600)
 def load_best_models() -> dict:
     path = MLFLOW_EXPORTS_DIR / "best_models.json"
+    if not path.exists():
+        st.error("MLflow exports not found. Run `notebooks/08_mlflow_experiments.py` first.")
+        st.stop()
     with open(path) as f:
         return json.load(f)
 
@@ -34,6 +40,11 @@ best_models = load_best_models()
 # ── Header ────────────────────────────────────────────────────
 st.title("📈 MLflow Experiment Tracking")
 st.caption("All training runs logged to sqlite:///mlruns/mlflow.db")
+if FAST_MODE:
+    st.warning(
+        "**FAST_MODE ON** — Metrics shown are from 50K sample. "
+        "Re-run pipeline with `FAST_MODE = False` for production metrics."
+    )
 
 # ── GUVI compliance cards ─────────────────────────────────────
 n_runs = len(all_runs)
