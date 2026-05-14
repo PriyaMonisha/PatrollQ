@@ -45,8 +45,13 @@ for reference files before writing any code.
 ---
 
 ## ⚠️ MANDATORY AFTER EVERY SECTION (no exceptions)
-**Update this file.** Move the section from Remaining → Completed. Update Current Status.
-This is checked in the Section Completion Checklist below. Do NOT skip.
+**A post-commit hook will fire automatically after every `git commit` and inject a reminder.**
+When you see a POST-COMMIT REMINDER in your context, immediately do BOTH of these — no exceptions:
+
+1. **Update CLAUDE.md** — move section from Remaining → Completed, update Current Status + Last Working File + Last Decision Made
+2. **Update CLAUDE_CONTEXT.md** — add a lessons block under the MANDATORY section with: What Worked, Mistakes Made, New Rules, Time Taken, Difficulty
+
+Do NOT wait for the user to ask. Do NOT skip either step. Do NOT move to the next task first.
 
 ---
 

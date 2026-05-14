@@ -7,5 +7,21 @@
       "Bash(git *)",
       "Bash(streamlit run *)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "shell": "bash",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"POST-COMMIT REMINDER — Do these two things NOW before your next response: (1) Update CLAUDE.md: move the completed section from Remaining to Completed, update Current Status and Last Working File. (2) Update CLAUDE_CONTEXT.md: add a lessons block under the MANDATORY section (What Worked, Mistakes Made, New Rules, Time Taken, Difficulty). Do NOT wait for the user to ask.\"}}'",
+            "statusMessage": "Reminding: update CLAUDE.md + CLAUDE_CONTEXT.md"
+          }
+        ]
+      }
+    ]
   }
 }
