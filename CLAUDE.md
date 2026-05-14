@@ -38,9 +38,9 @@ for reference files before writing any code.
 ---
 
 ## Current Status
-**Active Section:** Section 10 — Docker + CI
-**Last Working File:** streamlit_app.py, pages/1–5 (multiple bug-fix rounds after initial build)
-**Last Decision Made:** REDUCTION_FEATURES = FULL_FEATURES (14 engineered features, not raw lat/lon); temporal K=4 confirmed by silhouette (0.26)
+**Active Section:** All sections complete ✅
+**Last Working File:** Dockerfile, docker-compose.yml, .github/workflows/ci.yml, tests/test_helpers.py (Section 10)
+**Last Decision Made:** Single-stage Dockerfile (Streamlit-only), artifacts baked in, mlruns/ volume-mounted, CI = lint + pytest + docker build only
 
 ---
 
@@ -65,13 +65,13 @@ This is checked in the Section Completion Checklist below. Do NOT skip.
 - [x] Section 7: src/models/dimensionality_reduction.py, notebooks/07_dimensionality_reduction.py (commit 89303f4) — PCA 35.9% (FAST_MODE), t-SNE KL=1.31
 - [x] Section 8: src/utils/helpers.py, scripts/run_full_pipeline.py, notebooks/08_mlflow_experiments.py (commit cb6dc56) — 16 runs exported, PatrolIQ_TemporalClustering registered
 - [x] Section 9: streamlit_app.py, pages/1–5 (commits 9dc6243→012098e) — crime type filter, cluster insight cards, scroll fix, layout polish, GUVI compliance table
+- [x] Section 10: Dockerfile, .dockerignore, docker-compose.yml, .github/workflows/ci.yml, tests/test_helpers.py (commit 109d940) — 12 unit tests pass, lint clean
 
 ### In Progress 🔄
 (none)
 
 ### Remaining 📋
-- [ ] Section 10: Dockerfile, docker-compose.yml, .github/workflows/ci.yml
-- [ ] Section 10: Dockerfile, docker-compose.yml, .github/workflows/ci.yml
+(none — all sections complete)
 
 ---
 
