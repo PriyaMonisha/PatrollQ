@@ -38,7 +38,7 @@ for reference files before writing any code.
 ---
 
 ## Current Status
-**Active Section:** Section 9 — Streamlit App
+**Active Section:** Section 10 — Docker + CI
 **Last Working File:** src/utils/helpers.py, scripts/run_full_pipeline.py, notebooks/08_mlflow_experiments.py
 **Last Decision Made:** REDUCTION_FEATURES = FULL_FEATURES (14 engineered features, not raw lat/lon); temporal K=4 confirmed by silhouette (0.26)
 
@@ -64,6 +64,7 @@ This is checked in the Section Completion Checklist below. Do NOT skip.
 - [x] Section 6: src/models/temporal_clustering.py, notebooks/06_temporal_clustering.py (commit db05bb2) — K=4 sil=0.26
 - [x] Section 7: src/models/dimensionality_reduction.py, notebooks/07_dimensionality_reduction.py (commit 89303f4) — PCA 35.9% (FAST_MODE), t-SNE KL=1.31
 - [x] Section 8: src/utils/helpers.py, scripts/run_full_pipeline.py, notebooks/08_mlflow_experiments.py (commit cb6dc56) — 16 runs exported, PatrolIQ_TemporalClustering registered
+- [x] Section 9: streamlit_app.py, pages/1–5 (commit 9dc6243) — Folium map, temporal heatmap, PCA/tSNE scatter, MLflow table, about page
 
 ### In Progress 🔄
 (none)
