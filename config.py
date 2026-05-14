@@ -27,6 +27,7 @@ FEATURES_CSV = DATA_PROCESSED_DIR / "chicago_crime_features.csv.gz"
 SAMPLE_METADATA = DATA_PROCESSED_DIR / "sample_metadata.json"
 LABEL_ENCODERS_PATH = MODELS_DIR / "label_encoders.pkl"
 FEATURE_ENGINEER_PATH = MODELS_DIR / "feature_engineer.pkl"
+MLFLOW_EXPORTS_DIR = ARTIFACTS_DIR / "mlflow_exports"  # Streamlit reads from here
 
 # ── Data ─────────────────────────────────────────────────────
 SAMPLE_SIZE = 500_000
