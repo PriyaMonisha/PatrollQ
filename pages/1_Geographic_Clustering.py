@@ -1,6 +1,6 @@
 # filename: pages/1_Geographic_Clustering.py
-# purpose:  Geographic crime hotspot clustering — WHERE do crimes cluster in Chicago?
-# version:  2.0
+# purpose:  Where are crime hotspots in Chicago? — geographic clustering dashboard
+# version:  3.0
 
 import json
 import sys
@@ -17,7 +17,7 @@ from config import ARTIFACTS_DIR, FAST_MODE, PROCESSED_CSV, RANDOM_STATE
 
 GEO_DIR = ARTIFACTS_DIR / "geographic"
 
-st.set_page_config(page_title="Where Are Crime Hotspots? — PatrolIQ",
+st.set_page_config(page_title="Crime Hotspots — PatrolIQ",
                    page_icon="🗺️", layout="wide")
 
 # ── Data loaders ──────────────────────────────────────────────
@@ -46,8 +46,7 @@ def load_enriched(model_key: str) -> pd.DataFrame:
         PROCESSED_CSV,
         usecols=["case_number", "primary_type", "Hour", "arrest"],
     )
-    merged = labels.merge(processed, on="case_number", how="left")
-    return merged
+    return labels.merge(processed, on="case_number", how="left")
 
 # ── Sidebar ───────────────────────────────────────────────────
 st.sidebar.header("Filters")
@@ -63,157 +62,174 @@ _ALGO_MAP = {
 }
 model_key = _ALGO_MAP.get(model_display or "", "kmeans")
 
-# Load enriched data for crime type filter
 enriched = load_enriched(model_key)
 crime_types_available = sorted(enriched["primary_type"].dropna().unique().tolist())
 
 crime_filter = st.sidebar.selectbox(
     "Filter by Crime Type",
     ["All Crime Types"] + crime_types_available,
-    help="Select a specific crime to see where it clusters most.",
+    help="Select a specific crime to see where it clusters.",
 )
 
 map_sample = st.sidebar.slider(
-    "Map points", 1_000, 10_000, 5_000, step=1_000,
-    help="More points = slower render. 5K is a good balance.",
+    "Map points", 500, 5_000, 2_000, step=500,
+    help="Fewer points = faster map interaction.",
 )
 
-# ── Load metrics ──────────────────────────────────────────────
-metrics = load_metrics(model_key)
+# ── Apply filter ──────────────────────────────────────────────
+metrics    = load_metrics(model_key)
+df_all     = enriched[enriched["cluster"] != -1]
+df_filtered = (
+    df_all[df_all["primary_type"] == crime_filter]
+    if crime_filter != "All Crime Types" else df_all
+)
 
-# ── Apply crime type filter ───────────────────────────────────
-if crime_filter != "All Crime Types":
-    df_filtered = enriched[enriched["primary_type"] == crime_filter]
-else:
-    df_filtered = enriched.copy()
-
-# ── Page header ───────────────────────────────────────────────
+# ── Page title ────────────────────────────────────────────────
 st.title("🗺️ Where Are Crime Hotspots in Chicago?")
 if crime_filter != "All Crime Types":
-    st.subheader(f"Showing: **{crime_filter}** — {len(df_filtered):,} incidents")
+    st.markdown(f"**Filtered to: {crime_filter}** — {len(df_filtered):,} incidents")
 if FAST_MODE:
     st.warning(
-        "**FAST_MODE ON** — Results from 50K most-recent records (Feb–Apr 2026). "
-        "Set `FAST_MODE = False` in config.py and re-run pipeline for full 500K results."
+        "**FAST_MODE** — 50K records (Feb–Apr 2026). "
+        "Set `FAST_MODE = False` and re-run pipeline for full 500K results."
     )
 
-# ── Model metric cards ────────────────────────────────────────
-m1, m2, m3 = st.columns(3)
-m1.metric("Geographic Clusters", metrics.get("n_clusters", "N/A"))
-m2.metric("Silhouette Score",
-          f"{metrics.get('silhouette', 0):.4f}" if metrics.get("silhouette") else "N/A",
-          "Higher = better separation")
-if model_key == "dbscan":
-    m3.metric("Noise Fraction", f"{metrics.get('noise_fraction', 0)*100:.1f}%", "Target < 10%")
-else:
-    m3.metric("Davies-Bouldin", f"{metrics.get('davies_bouldin', 0):.4f}", "Lower = better")
-
-st.divider()
-
-# ── Cluster summary cards (the "insight" layer) ───────────────
-st.subheader("Cluster Insights — What Action to Take")
+# ══════════════════════════════════════════════
+# SECTION 1 — ACTIONABLE INSIGHTS (non-tech, top)
+# ══════════════════════════════════════════════
+st.subheader("📋 Cluster Insights — What to Act On")
 
 cluster_summary = (
-    df_filtered[df_filtered["cluster"] != -1]
-    .groupby("cluster")
+    df_filtered.groupby("cluster")
     .agg(
         crime_count=("cluster", "count"),
-        peak_hour=("Hour", lambda x: x.mode().iloc[0] if len(x) > 0 else "N/A"),
-        arrest_rate=("arrest", lambda x: x.astype(str).str.lower()
-                     .map({"true": 1, "false": 0}).mean()),
+        peak_hour=("Hour", lambda x: int(x.mode().iloc[0]) if len(x) > 0 else -1),
         top_crime=("primary_type", lambda x: x.mode().iloc[0] if len(x) > 0 else "N/A"),
+        arrest_rate=("arrest", lambda x:
+                     x.astype(str).str.lower()
+                      .map({"true": 1.0, "false": 0.0})
+                      .mean()),
     )
     .reset_index()
     .sort_values("crime_count", ascending=False)
 )
 
-# Show top-4 clusters as insight cards
-top_clusters = cluster_summary.head(4)
-card_cols = st.columns(len(top_clusters))
+top_n = min(4, len(cluster_summary))
+card_cols = st.columns(top_n)
 
-for col, (_, row) in zip(card_cols, top_clusters.iterrows()):
-    peak_h = int(row["peak_hour"]) if row["peak_hour"] != "N/A" else "N/A"
-    peak_str = (
-        f"{peak_h:02d}:00–{(peak_h+2)%24:02d}:00" if isinstance(peak_h, int) else "N/A"
+for col, (_, row) in zip(card_cols, cluster_summary.head(top_n).iterrows()):
+    ph = row["peak_hour"]
+    peak_str = f"{ph:02d}:00 – {(ph+2)%24:02d}:00" if ph >= 0 else "N/A"
+    ar = row["arrest_rate"]
+    ar_str = f"{ar*100:.0f}%" if pd.notna(ar) else "N/A"
+    with col:
+        st.markdown(
+            f"**Cluster {int(row['cluster'])}**  \n"
+            f"🔴 {int(row['crime_count']):,} crimes  \n"
+            f"⏰ Peak: **{peak_str}**  \n"
+            f"🔑 Main type: **{row['top_crime']}**  \n"
+            f"👮 Arrest rate: **{ar_str}**"
+        )
+
+# ══════════════════════════════════════════════
+# SECTION 2 — CRIME MAP + VOLUME SIDE BY SIDE
+# ══════════════════════════════════════════════
+map_col, bar_col = st.columns([3, 1])
+
+with map_col:
+    st.markdown(f"**Crime Map** — {model_display}"
+                + (f" | {crime_filter}" if crime_filter != "All Crime Types" else "")
+                + f"  \n<small>Showing {min(map_sample, len(df_filtered)):,} "
+                  f"of {len(df_filtered):,} points. "
+                  "**Scroll on the page — not the map** to avoid accidental zoom.</small>",
+                unsafe_allow_html=True)
+
+    df_map = df_filtered.dropna(subset=["latitude", "longitude"])
+    if len(df_map) > map_sample:
+        df_map = df_map.sample(map_sample, random_state=RANDOM_STATE)
+
+    COLORS = [
+        "#e41a1c", "#377eb8", "#4daf4a", "#984ea3",
+        "#ff7f00", "#a65628", "#f781bf", "#999999",
+        "#66c2a5", "#fc8d62",
+    ]
+
+    # prefer_canvas=True + scrollWheelZoom=False = much faster, no scroll capture
+    fmap = folium.Map(
+        location=[41.83, -87.65],
+        zoom_start=11,
+        tiles="CartoDB positron",
+        prefer_canvas=True,       # canvas rendering — faster than SVG for many points
+        scrollWheelZoom=False,    # prevents page scroll from zooming map accidentally
     )
-    arrest_pct = f"{row['arrest_rate']*100:.0f}%" if pd.notna(row["arrest_rate"]) else "N/A"
 
-    col.markdown(
-        f"""
-        **Cluster {int(row['cluster'])}**
-        - Crimes: **{int(row['crime_count']):,}**
-        - Peak time: **{peak_str}**
-        - Top crime: **{row['top_crime']}**
-        - Arrest rate: **{arrest_pct}**
-        """
+    for _, row in df_map.iterrows():
+        c = int(row["cluster"])
+        folium.CircleMarker(
+            location=[row["latitude"], row["longitude"]],
+            radius=4,
+            color=COLORS[c % len(COLORS)],
+            fill=True,
+            fill_opacity=0.65,
+            tooltip=f"Cluster {c} | {row.get('primary_type', '')}",
+        ).add_to(fmap)
+
+    # returned_objects=[] prevents re-render on every interaction
+    st_folium(fmap, width=700, height=460, returned_objects=[])
+
+with bar_col:
+    st.markdown("**Volume per Cluster**")
+    cluster_counts = (
+        df_filtered[df_filtered["cluster"] != -1]["cluster"]
+        .value_counts().sort_index().reset_index()
     )
+    cluster_counts.columns = ["Cluster", "Count"]
+    cluster_counts["Cluster"] = cluster_counts["Cluster"].astype(str)
+    cluster_counts["Label"] = cluster_counts["Count"].apply(lambda x: f"{x:,}")
 
-st.divider()
-
-# ── Folium map ────────────────────────────────────────────────
-st.subheader(f"Crime Map — {model_display}" + (f" | {crime_filter}" if crime_filter != "All Crime Types" else ""))
-
-df_map = df_filtered.dropna(subset=["latitude", "longitude"])
-if len(df_map) > map_sample:
-    df_map = df_map.sample(map_sample, random_state=RANDOM_STATE)
-
-st.caption(f"Showing {len(df_map):,} points on map")
-
-COLORS = [
-    "#e41a1c", "#377eb8", "#4daf4a", "#984ea3",
-    "#ff7f00", "#a65628", "#f781bf", "#999999",
-    "#66c2a5", "#fc8d62",
-]
-
-def cluster_color(c: int) -> str:
-    if c == -1:
-        return "#cccccc"
-    return COLORS[c % len(COLORS)]
-
-fmap = folium.Map(location=[41.83, -87.65], zoom_start=11, tiles="CartoDB positron")
-
-for _, row in df_map.iterrows():
-    c = int(row["cluster"])
-    crime = row.get("primary_type", "Unknown")
-    folium.CircleMarker(
-        location=[row["latitude"], row["longitude"]],
-        radius=3,
-        color=cluster_color(c),
-        fill=True,
-        fill_opacity=0.6,
-        popup=f"Cluster {c} | {crime}",
-        tooltip=f"Cluster {c}",
-    ).add_to(fmap)
-
-st_folium(fmap, width=1050, height=520)
-
-# ── Cluster size bar ──────────────────────────────────────────
-st.subheader("Crime Volume per Cluster")
-
-cluster_counts = (
-    df_filtered[df_filtered["cluster"] != -1]["cluster"]
-    .value_counts().sort_index().reset_index()
-)
-cluster_counts.columns = ["Cluster", "Count"]
-cluster_counts["Cluster"] = cluster_counts["Cluster"].astype(str)
-
-_COLORS = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3",
-           "#ff7f00", "#a65628", "#f781bf", "#999999"]
-
-fig = px.bar(
-    cluster_counts, x="Cluster", y="Count",
-    color="Cluster",
-    color_discrete_sequence=_COLORS,
-    title=f"Crime count per cluster — {crime_filter}",
-    text="Count",
-)
-fig.update_traces(texttemplate="%{text:,}", textposition="outside")
-fig.update_layout(showlegend=False, height=350, yaxis_title="Number of Crimes")
-st.plotly_chart(fig, use_container_width=True)
+    fig = px.bar(
+        cluster_counts,
+        x="Count", y="Cluster",          # horizontal bar — labels never get clipped
+        orientation="h",
+        color="Cluster",
+        color_discrete_sequence=COLORS,
+        text="Label",
+    )
+    fig.update_traces(textposition="inside", insidetextanchor="middle")
+    fig.update_layout(
+        showlegend=False,
+        height=460,
+        margin=dict(l=10, r=10, t=10, b=10),
+        xaxis_title="",
+        yaxis_title="Cluster",
+        yaxis=dict(autorange="reversed"),
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 if model_key == "dbscan":
     noise = metrics.get("noise_count", 0)
     st.caption(
-        f"Noise points (unclassified): {noise:,} "
-        f"({metrics.get('noise_fraction', 0)*100:.1f}%) — these are isolated incidents"
+        f"Unclassified (noise) points excluded: {noise:,} "
+        f"({metrics.get('noise_fraction', 0)*100:.1f}%)"
+    )
+
+# ══════════════════════════════════════════════
+# SECTION 3 — TECHNICAL METRICS (for data team, below)
+# ══════════════════════════════════════════════
+with st.expander("🔬 Technical Model Metrics", expanded=False):
+    t1, t2, t3 = st.columns(3)
+    t1.metric("Algorithm",    model_display)
+    t2.metric("Silhouette",
+              f"{metrics.get('silhouette', 0):.4f}" if metrics.get("silhouette") else "N/A",
+              "Higher = better (max 1.0)")
+    if model_key == "dbscan":
+        t3.metric("Noise Fraction",
+                  f"{metrics.get('noise_fraction', 0)*100:.1f}%", "Target < 10%")
+    else:
+        t3.metric("Davies-Bouldin",
+                  f"{metrics.get('davies_bouldin', 0):.4f}", "Lower = better")
+    st.caption(
+        "Silhouette score measures how well each point fits its own cluster vs neighbours. "
+        "Values > 0.5 indicate strong clusters; 0.26–0.41 is moderate (typical for crime data "
+        "which has overlapping spatial patterns)."
     )
