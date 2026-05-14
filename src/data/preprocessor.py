@@ -207,7 +207,7 @@ def _validate_columns(df: pd.DataFrame) -> pd.DataFrame:
     if extra:
         logger.info(f"  Extra columns present (kept): {sorted(extra)}")
 
-    logger.info(f"  ✓ All 22 expected columns present")
+    logger.info("  ✓ All 22 expected columns present")
     return df
 
 

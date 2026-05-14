@@ -1,0 +1,43 @@
+# Git
+.git/
+.gitignore
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+
+# Raw data — too large for image (2.2GB CSV)
+data/
+
+# MLflow tracking — mounted as volume at runtime
+mlruns/
+
+# Training artifacts — not needed in serve image
+models/
+notebooks/
+scripts/
+
+# Docs / figures
+docs/
+
+# Secrets and config
+.env
+.env.example
+
+# Dev tooling
+pyrightconfig.json
+requirements.txt
+
+# Project docs
+CLAUDE.md
+CLAUDE_CONTEXT.md
+PROJECT_KICKOFF_CHECKLIST.md
+PatrolIQ.pdf
+
+# Tests
+tests/

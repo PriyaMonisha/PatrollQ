@@ -74,7 +74,7 @@ crime_types  = meta.get("crime_types", "N/A")
 try:
     df_kpi      = load_processed()
     arrest_rate = f"{df_kpi['arrest'].astype(str).str.lower().map({'true':1,'false':0}).mean()*100:.1f}%"
-    domestic_pct= f"{df_kpi['domestic'].astype(str).str.lower().map({'true':1,'false':0}).mean()*100:.1f}%"
+    domestic_pct = f"{df_kpi['domestic'].astype(str).str.lower().map({'true':1,'false':0}).mean()*100:.1f}%"
 except Exception:
     arrest_rate  = "N/A"
     domestic_pct = "N/A"

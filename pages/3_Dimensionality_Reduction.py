@@ -52,7 +52,7 @@ def load_temp_labels() -> pd.Series:
 pca_2d      = load_pca_2d()
 pca_metrics = load_pca_metrics()
 tsne_2d     = load_tsne_2d()
-tsne_metrics= load_tsne_metrics()
+tsne_metrics = load_tsne_metrics()
 geo_labels  = load_geo_labels()
 temp_labels = load_temp_labels()
 

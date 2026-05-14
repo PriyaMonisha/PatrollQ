@@ -1,0 +1,30 @@
+# filename: docker-compose.yml
+# purpose:  PatrolIQ Streamlit dashboard — local demo stack
+# version:  1.0
+#
+# Start:   docker compose up -d
+# Stop:    docker compose down
+# Rebuild: docker compose build --no-cache
+# Logs:    docker compose logs -f streamlit
+#
+# Artifacts are baked into the image (pre-computed, static).
+# Only mlruns/ is mounted — it holds the MLflow SQLite DB which is too
+# large to bake in and may be updated by local training runs.
+
+services:
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: patroliq-streamlit
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./mlruns:/app/mlruns
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      start_period: 30s
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped

@@ -77,7 +77,7 @@ def run_pca(X: pd.DataFrame) -> dict:
     target_met = cumulative >= PCA_VARIANCE_TARGET
 
     logger.info(
-        f"[PCA] Explained variance: "
+        "[PCA] Explained variance: "
         + " | ".join(f"PC{i+1}={v:.1%}" for i, v in enumerate(evr))
         + f" | Total={cumulative:.1%} "
         + ("(PASS)" if target_met else f"(below {PCA_VARIANCE_TARGET:.0%} target)")
