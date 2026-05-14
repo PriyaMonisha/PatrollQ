@@ -316,3 +316,28 @@ After completing each major section, output a block like this:
 **Time taken:** ~45 min
 **Difficulty:** Easy (architecture decisions were the only complexity)
 ---
+
+---
+### 📋 LESSONS UPDATE — Post-Project: Hook + Interview Prep
+**Date:** 2026-05-14
+**Section:** .claude/settings.json PostToolUse hook, INTERVIEW_PREP.md, CLAUDE_CONTEXT.md updates
+
+**What worked:**
+- PostToolUse hook with `"if": "Bash(git commit*)"` fires precisely on section commits — no noise from other bash calls
+- `additionalContext` in `hookSpecificOutput` injects the reminder directly into Claude's context without blocking the commit
+- Pipe-testing the command with `echo '{}' | bash -c "echo '...'"` before writing to settings — caught shell-escaping issues early
+- Lessons stored in TWO places (memory/feedback_lessons_learned.md + CLAUDE_CONTEXT.md) means they survive across both tool-based sessions and fresh-context pastes
+
+**Mistakes made:**
+- MISTAKE: CLAUDE_CONTEXT.md "MANDATORY" section was a blank template for all 10 sections — never got filled
+  CAUSE: No automated trigger existed; relied on Claude remembering to do it after each commit
+  FIX: Added PostToolUse git-commit hook + reinforced in CLAUDE.md mandatory block
+  PREVENTION: Set up the hook in Section 1 on the next project, not Section 10
+
+**New rules to add to CLAUDE_CONTEXT:**
+- For automation hooks: always use `"if": "Bash(git commit*)"` filter to avoid firing on every bash call. Use `additionalContext` not `systemMessage` — systemMessage shows in UI but doesn't enter Claude's reasoning context.
+- Two-layer enforcement: hook injects the reminder AND CLAUDE.md describes what to do when the reminder arrives. One layer alone is fragile.
+
+**Time taken:** ~20 min
+**Difficulty:** Easy
+---
