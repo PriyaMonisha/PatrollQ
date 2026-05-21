@@ -5,7 +5,7 @@
 # HOW TO RUN:
 #   python scripts/diagnose_dataset.py
 #
-# Share the full output with Claude before proceeding to preprocessing.
+# Run this before preprocessing to understand raw CSV schema and quality.
 # This tells us: column names, dtypes, null counts, date format, and
 # what Arrest/Domestic/Primary_Type values actually look like.
 
@@ -135,5 +135,5 @@ print("=" * 60)
 print(df.head(3).to_string())
 
 print("\n" + "=" * 60)
-print("DONE — share this full output with Claude")
+print("DONE")
 print("=" * 60)

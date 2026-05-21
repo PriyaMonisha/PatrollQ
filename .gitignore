@@ -44,3 +44,7 @@ Thumbs.db
 
 # ── Streamlit ────────────────────────────────────────────────
 .streamlit/secrets.toml
+
+# ── Local dev tooling (not part of project) ──────────────────
+.claude/
+ep/
