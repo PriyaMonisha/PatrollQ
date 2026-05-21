@@ -28,6 +28,7 @@ COPY config.py .
 COPY src/__init__.py src/
 COPY src/utils/ src/utils/
 COPY artifacts/ artifacts/
+COPY data/processed/ data/processed/
 
 RUN chown -R appuser:appuser /app
 USER appuser

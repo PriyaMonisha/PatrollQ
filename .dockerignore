@@ -12,7 +12,8 @@ __pycache__/
 *.egg-info/
 
 # Raw data — too large for image (2.2GB CSV)
-data/
+data/raw/
+# data/processed/ is included — pre-computed CSVs needed by Streamlit pages
 
 # MLflow tracking — mounted as volume at runtime
 mlruns/
