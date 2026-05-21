@@ -10,6 +10,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install API dependencies only (not full requirements.txt)
 COPY requirements-api.txt .
 RUN pip install --no-cache-dir -r requirements-api.txt
