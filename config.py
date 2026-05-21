@@ -94,7 +94,12 @@ SEVERITY_DEFAULT = 2  # for crime types not in lookup
 
 # ── Geographic Clustering ────────────────────────────────────
 KMEANS_GEO_K_RANGE = range(2, 16)     # test K = 2 to 15 in elbow method
-KMEANS_GEO_N_CLUSTERS = 8             # override after running elbow method
+# K=8 chosen over elbow-optimal K=2 for domain reasons:
+# Chicago PD operates 8 geographic districts. K=2 produces only
+# North/South split — not actionable for district-level deployment.
+# Elbow method confirms K≥3 has diminishing returns; K=8 matches
+# operational geography. Silhouette=0.41 accepted as trade-off.
+KMEANS_GEO_N_CLUSTERS = 8
 DBSCAN_EPS = 0.008                     # ~800m at Chicago latitude ~42°N
 # Derivation: 1 degree lat ≈ 111km at equator; at 42°N, 1° ≈ 82km; 0.008° ≈ 656m
 DBSCAN_MIN_SAMPLES = 100              # appropriate density for 500K records

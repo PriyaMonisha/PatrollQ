@@ -32,7 +32,7 @@ jobs:
         run: |
           flake8 src/ pages/ streamlit_app.py config.py \
             --max-line-length=120 \
-            --extend-ignore=E221,E202,E302,E305,E402,W503,W504,F401
+            --extend-ignore=E221,E202,E302,E305,E402,W503,W504
 
   test:
     name: Unit Tests (pytest)
@@ -48,7 +48,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run tests
-        run: pytest tests/ -v --tb=short --ignore=tests/mlflow
+        run: pytest tests/ -v --tb=short
 
   docker-build:
     name: Docker Build

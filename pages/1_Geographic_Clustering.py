@@ -174,8 +174,7 @@ with map_col:
             tooltip=f"Cluster {c} | {row.get('primary_type', '')}",
         ).add_to(fmap)
 
-    # returned_objects=[] prevents re-render on every interaction
-    st_folium(fmap, width=700, height=460, returned_objects=[])
+    st_folium(fmap, width=700, height=460)
 
 with bar_col:
     st.markdown("**Volume per Cluster**")

@@ -11,7 +11,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
-from sklearn.metrics import davies_bouldin_score, silhouette_score
+from sklearn.metrics import calinski_harabasz_score, davies_bouldin_score, silhouette_score
 
 from config import (
     ARTIFACTS_DIR,
@@ -116,18 +116,22 @@ def run_kmeans_temporal(
         random_state=RANDOM_STATE,
     ))
     db = float(davies_bouldin_score(X_arr, labels))
+    ch = float(calinski_harabasz_score(X_arr, labels))
 
     metrics = {
         "model": "kmeans_temporal",
         "n_clusters": k,
         "silhouette": round(sil, 6),
         "davies_bouldin": round(db, 6),
+        "calinski_harabasz": round(ch, 2),
         "inertia": round(float(model.inertia_), 2),
         "n_samples": len(X_arr),
     }
 
     _save_labels(labels, X, "kmeans")
     _save_metrics(metrics, "kmeans")
+    # TODO: load in api/predictor.py during T2.1 FastAPI work
+    # Artifact path: artifacts/temporal/kmeans_model.pkl
     _save_model(model, "kmeans_model.pkl")
 
     logger.info(

@@ -10,7 +10,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans
-from sklearn.metrics import davies_bouldin_score, silhouette_score
+from sklearn.metrics import calinski_harabasz_score, davies_bouldin_score, silhouette_score
 from sklearn.preprocessing import StandardScaler
 
 from config import (
@@ -231,19 +231,21 @@ def _compute_metrics(
     model_name: str,
     k: int,
 ) -> dict:
-    """Compute silhouette, davies-bouldin, and inertia (K-Means only)."""
+    """Compute silhouette, davies-bouldin, calinski-harabasz metrics."""
     sil = float(silhouette_score(
         X, labels,
         sample_size=min(5_000, len(X)),
         random_state=RANDOM_STATE,
     ))
     db = float(davies_bouldin_score(X, labels))
+    ch = float(calinski_harabasz_score(X, labels))
 
     metrics: dict = {
         "model": model_name,
         "n_clusters": k,
         "silhouette": round(sil, 6),
         "davies_bouldin": round(db, 6),
+        "calinski_harabasz": round(ch, 2),
         "n_samples": len(X),
     }
     return metrics
