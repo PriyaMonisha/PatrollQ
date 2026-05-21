@@ -113,12 +113,7 @@ with col2:
         .size()
         .reset_index(name="count")
     )
-    # Is_Weekend may be string "True"/"False" after CSV round-trip — handle both
-    wknd["Day Type"] = (
-        wknd["Is_Weekend"]
-        .astype(str).str.strip().str.lower()
-        .map({"true": "Weekend", "false": "Weekday", "1": "Weekend", "0": "Weekday"})
-    )
+    wknd["Day Type"] = wknd["Is_Weekend"].astype(bool).map({True: "Weekend", False: "Weekday"})
     wknd = wknd.dropna(subset=["Day Type"])
     fig_wk = px.bar(
         wknd, x="cluster", y="count", color="Day Type",

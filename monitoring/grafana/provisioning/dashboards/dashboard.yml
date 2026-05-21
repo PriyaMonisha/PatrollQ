@@ -1,0 +1,14 @@
+# filename: monitoring/grafana/provisioning/dashboards/dashboard.yml
+# purpose:  Tell Grafana where to find the provisioned dashboard JSON
+
+apiVersion: 1
+
+providers:
+  - name: PatrolIQ
+    orgId: 1
+    folder: PatrolIQ
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

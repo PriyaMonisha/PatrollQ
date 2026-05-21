@@ -1,17 +1,21 @@
 # filename: docker-compose.yml
-# purpose:  PatrolIQ Streamlit dashboard — local demo stack
-# version:  1.0
+# purpose:  PatrolIQ full MLOps stack — Streamlit + FastAPI + Prometheus + Grafana
+# version:  2.0
 #
 # Start:   docker compose up -d
 # Stop:    docker compose down
 # Rebuild: docker compose build --no-cache
-# Logs:    docker compose logs -f streamlit
+# Logs:    docker compose logs -f api
 #
-# Artifacts are baked into the image (pre-computed, static).
-# Only mlruns/ is mounted — it holds the MLflow SQLite DB which is too
-# large to bake in and may be updated by local training runs.
+# Services:
+#   streamlit  → http://localhost:8501  (dashboard)
+#   api        → http://localhost:8000  (FastAPI inference)
+#   prometheus → http://localhost:9090  (metrics collector)
+#   grafana    → http://localhost:3000  (dashboard, admin/admin)
 
 services:
+
+  # ── Streamlit Dashboard ───────────────────────────────────
   streamlit:
     build:
       context: .
@@ -19,6 +23,9 @@ services:
     container_name: patroliq-streamlit
     ports:
       - "8501:8501"
+    environment:
+      - ARTIFACTS_DIR=/app/artifacts
+      - LOG_LEVEL=INFO
     volumes:
       - ./mlruns:/app/mlruns
     healthcheck:
@@ -28,3 +35,62 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+
+  # ── FastAPI Inference + Prometheus /metrics ────────────────
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: patroliq-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ARTIFACTS_DIR=/app/artifacts
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./artifacts:/app/artifacts:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/health"]
+      start_period: 15s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # ── Prometheus ────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: patroliq-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ── Grafana ───────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: patroliq-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:

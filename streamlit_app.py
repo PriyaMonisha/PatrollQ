@@ -36,7 +36,12 @@ def load_metadata() -> dict:
 
 @st.cache_data
 def load_processed() -> pd.DataFrame:
-    return pd.read_csv(PROCESSED_CSV, usecols=["arrest", "domestic", "primary_type"])
+    df = pd.read_csv(PROCESSED_CSV, usecols=["arrest", "domestic", "primary_type"])
+    # Normalise bool columns — CSV round-trip produces "True"/"False" strings
+    for col in ("arrest", "domestic"):
+        if col in df.columns and df[col].dtype == object:
+            df[col] = df[col].astype(str).str.lower().map({"true": True, "false": False})
+    return df
 
 @st.cache_data
 def load_best_models() -> dict:
@@ -73,8 +78,8 @@ crime_types  = meta.get("crime_types", "N/A")
 
 try:
     df_kpi      = load_processed()
-    arrest_rate = f"{df_kpi['arrest'].astype(str).str.lower().map({'true':1,'false':0}).mean()*100:.1f}%"
-    domestic_pct = f"{df_kpi['domestic'].astype(str).str.lower().map({'true':1,'false':0}).mean()*100:.1f}%"
+    arrest_rate  = f"{df_kpi['arrest'].astype(bool).mean() * 100:.1f}%"
+    domestic_pct = f"{df_kpi['domestic'].astype(bool).mean() * 100:.1f}%"
 except Exception:
     arrest_rate  = "N/A"
     domestic_pct = "N/A"
