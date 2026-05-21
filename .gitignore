@@ -48,3 +48,4 @@ Thumbs.db
 # ── Local dev tooling (not part of project) ──────────────────
 .claude/
 ep/
+*.pdf
