@@ -143,4 +143,4 @@ PatrollQ/
 
 ---
 
-*GUVI HCL Capstone Project — Unsupervised ML on Public Safety Data*
+*PatrolIQ — Unsupervised ML on Public Safety Data*

@@ -20,8 +20,8 @@ st.title("ℹ️ About PatrolIQ")
 st.header("Project Overview")
 st.markdown("""
 **PatrolIQ** is a production-grade urban safety intelligence platform built on the
-Chicago crime dataset using unsupervised machine learning. This is a GUVI HCL
-capstone project for public safety analytics.
+Chicago crime dataset using unsupervised machine learning, designed for
+public safety analytics and data-driven patrol resource allocation.
 
 The platform answers: *Where do crime hotspots form? When do they peak?
 What structure exists in crime patterns when viewed across all features?*
@@ -184,8 +184,8 @@ with tc3:
 
 st.divider()
 
-# ── GUVI compliance ───────────────────────────────────────────
-st.header("GUVI Capstone Requirements")
+# ── Project benchmarks ────────────────────────────────────────
+st.header("Project Benchmarks & Results")
 
 _dbscan_noise_pct = f"{float(dbscan_noise) * 100:.2f}%" if isinstance(dbscan_noise, (int, float)) else str(dbscan_noise)
 _geo_sil_disp = f"{geo_sil:.4f}" if isinstance(geo_sil, float) else str(geo_sil)

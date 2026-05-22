@@ -40,7 +40,7 @@ REFERENCE = {
         "kl_divergence":     (0.5, 3.0),
     },
     "mlflow": {
-        "total_runs_min":    6,               # GUVI requirement
+        "total_runs_min":    6,               # minimum experiment runs
     },
 }
 

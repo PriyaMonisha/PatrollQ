@@ -87,7 +87,7 @@ The following uses are explicitly NOT supported and should NOT be attempted:
 - Total runs logged: **16**
 - Experiments: geographic (3), temporal (2), dimensionality (1)
 - Model registered: `PatrolIQ_TemporalClustering v2`
-- GUVI requirement (≥6 runs): ✅ PASS
+- Experiment tracking requirement (≥6 runs): ✅ PASS
 
 ---
 
@@ -149,4 +149,4 @@ More crimes recorded          More arrests made
 
 ---
 
-*PatrolIQ — GUVI HCL Capstone Project | Developed 2026*
+*PatrolIQ — Urban Safety Intelligence Platform | Developed 2026*

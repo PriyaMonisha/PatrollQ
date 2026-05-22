@@ -60,7 +60,7 @@ total_runs = len(geo_runs) + len(temp_runs) + len(dim_runs)
 print(f"  Geographic    : {len(geo_runs)} runs")
 print(f"  Temporal      : {len(temp_runs)} runs")
 print(f"  Dimensionality: {len(dim_runs)} runs")
-print(f"  Total         : {total_runs} runs (GUVI target >= 6: {'PASS' if total_runs >= 6 else 'FAIL'})")
+print(f"  Total         : {total_runs} runs")
 
 # Build all_runs list with clean keys
 all_runs = []
@@ -196,7 +196,7 @@ print(f"\n{'='*55}")
 print(f"  SECTION 8: MLFLOW EXPERIMENTS EXPORT COMPLETE")
 print(f"{'='*55}")
 print(f"  Runs exported    : {len(all_runs)} / {total_runs} expected")
-print(f"  GUVI target >=6  : {'PASS' if total_runs >= 6 else 'FAIL'}")
+print(f"  Runs logged      : {'PASS' if total_runs >= 6 else 'check pipeline'}")
 print(f"  Models registered: PatrolIQ_TemporalClustering v{reg_version or 'N/A'}")
 print(f"  Exports saved    : {MLFLOW_EXPORTS_DIR}")
 print(f"  Files:")

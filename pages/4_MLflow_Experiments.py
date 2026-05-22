@@ -46,13 +46,13 @@ if FAST_MODE:
         "Re-run pipeline with `FAST_MODE = False` for production metrics."
     )
 
-# ── GUVI compliance cards ─────────────────────────────────────
+# ── Experiment summary cards ───────────────────────────────────
 n_runs = len(all_runs)
 experiments = {r["experiment"] for r in all_runs}
 
 c1, c2, c3 = st.columns(3)
 c1.metric("Total Runs Logged",  n_runs,
-          "GUVI target >= 6: PASS" if n_runs >= 6 else "FAIL")
+          f"{n_runs} runs across {len(experiments)} experiments")
 c2.metric("Experiments",        len(experiments))
 c3.metric("Models Registered",  "1 (PatrolIQ_TemporalClustering)")
 
@@ -141,12 +141,12 @@ if sil_data:
     )
     fig.update_traces(textposition="outside")
     fig.add_hline(y=0.5, line_dash="dash", line_color="red",
-                  annotation_text="GUVI target 0.5")
+                  annotation_text="Target: 0.5")
     fig.update_layout(height=380, showlegend=False, yaxis_range=[0, 0.6])
     st.plotly_chart(fig, use_container_width=True)
     if any(d["Silhouette"] < 0 for d in sil_data):
         st.caption(
             "Note: DBSCAN silhouette is negative (-0.13) because DBSCAN optimises for "
             "density, not centroid separation. The noise fraction (3.8%) is the primary "
-            "DBSCAN quality metric, which **passes** the < 10% GUVI target."
+            "DBSCAN quality metric — noise fraction of 3.8% is well within the < 10% threshold."
         )

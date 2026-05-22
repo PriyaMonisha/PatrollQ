@@ -66,7 +66,7 @@ if FAST_MODE:
 st.title("🔍 PatrolIQ — Urban Safety Intelligence Platform")
 st.caption(
     "Unsupervised machine learning on Chicago crime data (2001–2026) | "
-    "GUVI HCL Capstone Project"
+    "Urban Safety Intelligence Platform"
 )
 st.divider()
 
