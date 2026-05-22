@@ -11,10 +11,19 @@
 
 ## Demo
 
-> **Record a 20-second GIF using [ScreenToGif](https://www.screentogif.com/) (free, Windows):**
-> Map loads → click a cluster → tooltip appears → temporal heatmap → About page metrics
+![PatrolIQ Demo](docs/streamlit_homepage.gif)
+
+---
+
+## Screenshots
+
+| Geographic Clustering — Crime Hotspot Map | Temporal Clustering — Activity Heatmap |
+|---|---|
+| ![Geographic](docs/screenshot_geographic.png) | ![Temporal](docs/screenshot_temporal.png) |
+
+> **Geographic:** 4,475 ASSAULT incidents across 8 K-Means clusters. Each cluster shows peak hour, dominant crime type, and arrest rate — actionable insights for patrol planning.
 >
-> Save as `docs/demo.gif` and replace this line with: `![Demo](docs/demo.gif)`
+> **Temporal:** Normalised crime activity by cluster × hour. Cluster 0 peaks overnight (0–5 AM), Cluster 3 peaks early evening (15–20). Used to plan shift allocation.
 
 ---
 

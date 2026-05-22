@@ -41,6 +41,7 @@ htmlcov/
 # ── OS ───────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # ── Streamlit ────────────────────────────────────────────────
 .streamlit/secrets.toml
