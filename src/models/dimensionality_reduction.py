@@ -4,7 +4,6 @@
 
 import json
 import logging
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -18,7 +17,6 @@ from config import (
     PCA_SCATTER_SAMPLE,
     PCA_VARIANCE_TARGET,
     RANDOM_STATE,
-    REDUCTION_FEATURES,
     TSNE_N_COMPONENTS,
     TSNE_N_ITER,
     TSNE_PCA_PREPROCESS_N,

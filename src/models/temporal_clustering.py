@@ -4,8 +4,6 @@
 
 import json
 import logging
-from pathlib import Path
-from typing import Optional
 
 import joblib
 import numpy as np
@@ -19,7 +17,6 @@ from config import (
     KMEANS_TEMPORAL_K_RANGE,
     KMEANS_TEMPORAL_N_CLUSTERS,
     RANDOM_STATE,
-    TEMPORAL_FEATURES,
 )
 
 logger = logging.getLogger(__name__)

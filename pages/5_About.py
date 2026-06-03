@@ -9,7 +9,7 @@ from pathlib import Path
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import ARTIFACTS_DIR, FAST_MODE, FAST_SAMPLE_SIZE, SAMPLE_SIZE
+from config import ARTIFACTS_DIR, FAST_SAMPLE_SIZE, SAMPLE_SIZE
 
 st.set_page_config(page_title="About — PatrolIQ",
                    page_icon="ℹ️", layout="wide")
@@ -196,7 +196,7 @@ _tsne_kl_disp = f"{tsne_kl:.3f}" if isinstance(tsne_kl, float) else str(tsne_kl)
 st.markdown(f"""
 | Requirement | Target | Actual (FAST_MODE) | Status |
 |-------------|--------|---------------------|--------|
-| Geographic K-Means silhouette | > 0.5 | {_geo_sil_disp} (50K, 3 months) | Below in dev — higher expected in production |
+| Geographic K-Means silhouette | > 0.5 | {_geo_sil_disp} (50K, 3 months) | Below target — higher in production |
 | DBSCAN noise fraction | < 10% | **{_dbscan_noise_pct}** | **PASS** |
 | Hierarchical clustering | Subsample | Ward k=8 on 10K rows, sil={_hier_sil_disp} | PASS |
 | PCA explained variance | ≥ 70% (2–3 comp.) | {pca_var_str} (3 months data) | Below in dev — see technical note above |

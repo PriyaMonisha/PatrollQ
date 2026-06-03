@@ -12,9 +12,7 @@ from typing import Optional
 import pandas as pd
 
 from config import (
-    DATA_PROCESSED_DIR,
     EXPECTED_COLUMNS,
-    LABEL_ENCODERS_PATH,
     PROCESSED_CSV,
     SAMPLE_METADATA,
     SAMPLE_SIZE,

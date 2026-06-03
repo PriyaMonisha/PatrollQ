@@ -4,14 +4,12 @@
 
 import json
 import logging
-from pathlib import Path
 from typing import Optional
 
 import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans
 from sklearn.metrics import calinski_harabasz_score, davies_bouldin_score, silhouette_score
-from sklearn.preprocessing import StandardScaler
 
 from config import (
     ARTIFACTS_DIR,

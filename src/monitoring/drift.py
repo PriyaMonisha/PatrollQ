@@ -7,7 +7,6 @@ import logging
 import os
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from scipy.stats import ks_2samp  # chi2_contingency removed — never called
 
