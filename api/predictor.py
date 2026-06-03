@@ -55,6 +55,13 @@ def get_temporal_model():
     return joblib.load(path)
 
 
+def clear_model_cache() -> None:
+    """Invalidate all lru_cache entries so models reload from disk on next request."""
+    get_geo_model.cache_clear()
+    get_cluster_profile.cache_clear()
+    get_temporal_model.cache_clear()
+
+
 def predict_geographic(lat: float, lon: float) -> dict:
     """
     Predict geographic crime cluster for a coordinate using K-Means model.
@@ -66,7 +73,18 @@ def predict_geographic(lat: float, lon: float) -> dict:
     X = np.array([[lat, lon]], dtype=np.float32)
     cluster_id = int(model.predict(X)[0])
 
-    cluster_info = profile.get(cluster_id, {})
+    if cluster_id not in profile:
+        import logging as _logging
+        _logging.getLogger(__name__).error(
+            f"Cluster {cluster_id} missing from profile (has: {list(profile.keys())}). "
+            "Model and profile may be from different pipeline runs."
+        )
+        raise KeyError(
+            f"Cluster {cluster_id} has no profile. "
+            "Retrain: python scripts/run_full_pipeline.py"
+        )
+
+    cluster_info = profile[cluster_id]
     risk_level = cluster_info.get("risk_level", "MEDIUM")
     dominant_crime = cluster_info.get("dominant_crime", "THEFT")
     avg_severity = cluster_info.get("avg_severity_score")

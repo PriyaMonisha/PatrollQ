@@ -11,15 +11,6 @@ from config import SEVERITY_DEFAULT, SEVERITY_SCORES
 
 logger = logging.getLogger(__name__)
 
-# ── Season ordinal map ───────────────────────────────────────
-# 0=Winter, 1=Spring, 2=Summer, 3=Fall
-SEASON_CODE_MAP: dict[str, int] = {
-    "Winter": 0,
-    "Spring": 1,
-    "Summer": 2,
-    "Fall":   3,
-}
-
 # ── Canonical list of features this class ADDS ───────────────
 # Used by clustering notebooks and tests to identify engineered columns.
 # Does NOT include Is_Weekend, primary_type_code, location_desc_code,
@@ -40,7 +31,8 @@ NEW_FEATURES = [
     "lat_norm", "lon_norm",
     # Group 3: Crime characteristics
     "Crime_Severity_Score",  # int8, 1–10 ordinal from SEVERITY_SCORES lookup
-    "Season_Code",           # int8, 0=Winter … 3=Fall
+    # Season_Code removed: month_sin/month_cos already capture seasonality
+    # in a continuous, distance-metric-safe way. Ordinal 0-3 is redundant.
 ]
 
 
@@ -173,15 +165,6 @@ class CrimeFeatureEngineer:
             df["primary_type"]
             .map(SEVERITY_SCORES)
             .fillna(SEVERITY_DEFAULT)
-            .astype("int8")
-        )
-
-        # Season code: ordinal 0–3 from string Season column.
-        # 0=Winter, 1=Spring, 2=Summer, 3=Fall
-        df["Season_Code"] = (
-            df["Season"]
-            .map(SEASON_CODE_MAP)
-            .fillna(0)
             .astype("int8")
         )
 

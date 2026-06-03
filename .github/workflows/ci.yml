@@ -1,6 +1,6 @@
 # filename: .github/workflows/ci.yml
 # purpose:  PatrolIQ CI — lint, unit tests, docker build
-# version:  1.0
+# version:  1.1
 #
 # Runs on every push and PR to main/master.
 # Does NOT run the training pipeline — data file is gitignored.
@@ -44,11 +44,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install core dependencies
         run: pip install -r requirements.txt
 
+      - name: Install API dependencies
+        run: pip install -r requirements-api.txt
+
+      - name: Install dev dependencies
+        run: pip install pytest pytest-cov
+
       - name: Run tests
-        run: pytest tests/ -v --tb=short
+        run: pytest tests/ -v --tb=short --cov=src --cov=api --cov-report=term-missing
 
   docker-build:
     name: Docker Build

@@ -148,9 +148,6 @@ sev_range = f"[{df_features['Crime_Severity_Score'].min()}, {df_features['Crime_
 sev_dist  = df_features['Crime_Severity_Score'].value_counts().sort_index().to_dict()
 print(f"  Crime_Severity_Score range: {sev_range}  (expected [1,10])")
 print(f"  Score distribution: {sev_dist}")
-print(f"  Season_Code range: [{df_features['Season_Code'].min()}, {df_features['Season_Code'].max()}]  (expected [0,3])")
-season_code_dist = df_features['Season_Code'].value_counts().sort_index().to_dict()
-print(f"  Season_Code distribution: {season_code_dist}  (0=Winter, 1=Spring, 2=Summer, 3=Fall)")
 
 # Null check on all new features
 print("\n[Null check] New features:")
@@ -291,11 +288,10 @@ print(f"\n  Group 2 — Geographic Normalization (2 features):")
 for col in ['lat_norm', 'lon_norm']:
     print(f"    {col:15}: float32, range [{df_features[col].min():.4f}, {df_features[col].max():.4f}]")
 
-print(f"\n  Group 3 — Crime Characteristics (2 features):")
+print(f"\n  Group 3 — Crime Characteristics (1 feature):")
 print(f"    Crime_Severity_Score : int8, "
       f"mean={df_features['Crime_Severity_Score'].mean():.2f}, "
       f"range [{df_features['Crime_Severity_Score'].min()}, {df_features['Crime_Severity_Score'].max()}]")
-print(f"    Season_Code          : int8, 0=Winter/1=Spring/2=Summer/3=Fall")
 
 print(f"\nFEATURE SETS READY:")
 print(f"  GEO_FEATURES      = {GEO_FEATURES}")

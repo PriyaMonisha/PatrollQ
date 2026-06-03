@@ -1,17 +1,21 @@
 # filename: docker-compose.yml
 # purpose:  PatrolIQ full MLOps stack — Streamlit + FastAPI + Prometheus + Grafana
-# version:  2.0
+# version:  2.1
 #
 # Start:   docker compose up -d
 # Stop:    docker compose down
 # Rebuild: docker compose build --no-cache
 # Logs:    docker compose logs -f api
 #
+# Required env vars (set in .env or shell before docker compose up):
+#   PATROLIQ_API_KEY        — API key for /v1/admin/* endpoints
+#   GRAFANA_ADMIN_PASSWORD  — Grafana admin password (default: admin for local dev)
+#
 # Services:
 #   streamlit  → http://localhost:8501  (dashboard)
 #   api        → http://localhost:8000  (FastAPI inference)
 #   prometheus → http://localhost:9090  (metrics collector)
-#   grafana    → http://localhost:3000  (dashboard, admin/admin)
+#   grafana    → http://localhost:3000  (dashboard)
 
 services:
 
@@ -26,6 +30,7 @@ services:
     environment:
       - ARTIFACTS_DIR=/app/artifacts
       - LOG_LEVEL=INFO
+      - PYTHONPATH=/app
     volumes:
       - ./mlruns:/app/mlruns
     healthcheck:
@@ -34,6 +39,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 3
+    mem_limit: 2g
     restart: unless-stopped
 
   # ── FastAPI Inference + Prometheus /metrics ────────────────
@@ -47,6 +53,8 @@ services:
     environment:
       - ARTIFACTS_DIR=/app/artifacts
       - LOG_LEVEL=INFO
+      - PYTHONPATH=/app
+      - PATROLIQ_API_KEY=${PATROLIQ_API_KEY:-}
     volumes:
       - ./artifacts:/app/artifacts:ro
     healthcheck:
@@ -55,6 +63,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    mem_limit: 1g
     restart: unless-stopped
 
   # ── Prometheus ────────────────────────────────────────────
@@ -72,6 +81,7 @@ services:
       - "--storage.tsdb.retention.time=7d"
     depends_on:
       - api
+    mem_limit: 512m
     restart: unless-stopped
 
   # ── Grafana ───────────────────────────────────────────────
@@ -81,14 +91,16 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - prometheus
+    mem_limit: 512m
     restart: unless-stopped
 
 volumes:

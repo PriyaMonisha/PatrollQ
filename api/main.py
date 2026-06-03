@@ -8,8 +8,9 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Security
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security.api_key import APIKeyHeader
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
     Counter,
@@ -19,7 +20,7 @@ from prometheus_client import (
 )
 from starlette.responses import Response
 
-from api.predictor import predict_geographic, predict_temporal
+from api.predictor import clear_model_cache, predict_geographic, predict_temporal
 from api.schemas import (
     DriftFeatureResult,
     DriftReportResponse,
@@ -67,6 +68,18 @@ MODEL_VERSION = Gauge(
 # Set static model version gauges at startup
 MODEL_VERSION.labels(model_name="kmeans_geo", version="v1").set(1)
 MODEL_VERSION.labels(model_name="kmeans_temporal", version="v1").set(1)
+
+# ── API key auth ─────────────────────────────────────────────
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def verify_api_key(key: str | None = Security(_api_key_header)) -> None:
+    """Dependency that enforces PATROLIQ_API_KEY on admin endpoints."""
+    expected = os.getenv("PATROLIQ_API_KEY")
+    if not expected:
+        raise HTTPException(status_code=503, detail="Admin endpoint disabled: PATROLIQ_API_KEY not set")
+    if key != expected:
+        raise HTTPException(status_code=403, detail="Invalid or missing API key")
 
 # ── App setup ────────────────────────────────────────────────
 
@@ -146,6 +159,8 @@ def predict_geo(request: GeoRequest):
         result = predict_geographic(request.lat, request.lon)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except KeyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
 
@@ -217,3 +232,23 @@ def drift_report():
         results=results,
         report_timestamp=datetime.now(timezone.utc).isoformat(),
     )
+
+
+@app.post(
+    "/v1/admin/reload-models",
+    tags=["Admin"],
+    dependencies=[Depends(verify_api_key)],
+)
+def reload_models():
+    """
+    Force reload of all cached ML models from disk.
+    Use after retraining (run_full_pipeline.py) without restarting the container.
+    Requires X-API-Key header matching PATROLIQ_API_KEY env var.
+    """
+    clear_model_cache()
+    logger.info("Model cache cleared via /v1/admin/reload-models")
+    return {
+        "message": "Model cache cleared",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "note": "Models reload from disk on next prediction request",
+    }
