@@ -34,10 +34,8 @@ from src.models.geographic_clustering import (
     run_kmeans_geo,
 )
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-)
+from src.utils.logger import setup_logging
+setup_logging()
 logger = logging.getLogger(__name__)
 
 DOCS_FIGURES_DIR.mkdir(parents=True, exist_ok=True)

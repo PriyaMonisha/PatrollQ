@@ -1,36 +1,27 @@
 # filename: api/schemas.py
 # purpose:  Pydantic request/response models for PatrolIQ FastAPI
 
-from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ── Geographic prediction ─────────────────────────────────────
 
 class GeoRequest(BaseModel):
-    lat: float = Field(..., example=41.85, description="Latitude (Chicago: 41.6–42.0)")
-    lon: float = Field(..., example=-87.65, description="Longitude (Chicago: -87.9 to -87.5)")
-
-    @validator("lat")
-    def validate_lat(cls, v):
-        if not (41.6 <= v <= 42.0):
-            raise ValueError("Latitude outside Chicago bounds (41.6–42.0)")
-        return v
-
-    @validator("lon")
-    def validate_lon(cls, v):
-        if not (-87.9 <= v <= -87.5):
-            raise ValueError("Longitude outside Chicago bounds (-87.9 to -87.5)")
-        return v
+    lat: float = Field(..., ge=41.6, le=42.0, description="Latitude (Chicago: 41.6–42.0)")
+    lon: float = Field(..., ge=-87.9, le=-87.5, description="Longitude (Chicago: -87.9 to -87.5)")
 
 
 class GeoResponse(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
     cluster_id: int
     cluster_label: str
-    crime_risk_level: str           # HIGH / MEDIUM / LOW
+    crime_risk_level: Literal["HIGH", "MEDIUM", "LOW"]
     dominant_crime_type: str
+    avg_severity_score: Optional[float] = None
+    arrest_rate: Optional[float] = None
     model_name: str
     model_version: str
     prediction_timestamp: str
@@ -39,9 +30,9 @@ class GeoResponse(BaseModel):
 # ── Temporal prediction ───────────────────────────────────────
 
 class TemporalRequest(BaseModel):
-    hour: int = Field(..., ge=0, le=23, example=22, description="Hour of day (0–23)")
-    day_of_week: int = Field(..., ge=0, le=6, example=5, description="Day of week (0=Mon, 6=Sun)")
-    month: int = Field(..., ge=1, le=12, example=7, description="Month (1–12)")
+    hour: int = Field(..., ge=0, le=23, description="Hour of day (0–23)")
+    day_of_week: int = Field(..., ge=0, le=6, description="Day of week (0=Mon, 6=Sun)")
+    month: int = Field(..., ge=1, le=12, description="Month (1–12)")
     is_weekend: Optional[bool] = Field(None, description="Override weekend flag (inferred if omitted)")
 
 
@@ -54,6 +45,8 @@ TEMPORAL_CLUSTER_LABELS = {
 
 
 class TemporalResponse(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
     cluster_id: int
     cluster_label: str
     pattern_description: str
@@ -65,10 +58,11 @@ class TemporalResponse(BaseModel):
 # ── Health ────────────────────────────────────────────────────
 
 class HealthResponse(BaseModel):
-    status: str
+    status: Literal["ok", "degraded"]
     geo_model_loaded: bool
     temporal_model_loaded: bool
     api_version: str
+    timestamp: str
 
 
 # ── Drift ────────────────────────────────────────────────────

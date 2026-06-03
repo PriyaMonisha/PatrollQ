@@ -2,10 +2,13 @@
 # purpose:  PatrolIQ FastAPI inference server — geographic + temporal cluster prediction
 #           Exposes /metrics endpoint for Prometheus scraping.
 
+import logging
+import os
 import time
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
@@ -26,6 +29,13 @@ from api.schemas import (
     TemporalRequest,
     TemporalResponse,
 )
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from src.utils.logger import setup_logging
+
+logger = logging.getLogger(__name__)
 
 # ── Prometheus metrics ────────────────────────────────────────
 
@@ -60,17 +70,35 @@ MODEL_VERSION.labels(model_name="kmeans_temporal", version="v1").set(1)
 
 # ── App setup ────────────────────────────────────────────────
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    setup_logging()
+    logger.info("PatrolIQ API v1.0 starting...")
+    logger.info(f"ARTIFACTS_DIR: {os.getenv('ARTIFACTS_DIR', './artifacts')}")
+    logger.info(f"API Key configured: {bool(os.getenv('PATROLIQ_API_KEY'))}")
+    yield
+    logger.info("PatrolIQ API shutting down gracefully")
+
+
 app = FastAPI(
     title="PatrolIQ Crime Intelligence API",
     description="Geographic and temporal crime cluster prediction for Chicago PD",
     version="1.0.0",
+    lifespan=lifespan,
 )
+
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS", "http://localhost:8501,http://patroliq-streamlit:8501"
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "X-API-Key"],
+    expose_headers=["X-Process-Time"],
+    allow_credentials=False,
+    max_age=3600,
 )
 
 
@@ -88,8 +116,8 @@ def health():
     geo_ok = True
     temporal_ok = True
     try:
-        from api.predictor import get_geo_labels
-        get_geo_labels()
+        from api.predictor import get_geo_model
+        get_geo_model()
     except Exception:
         geo_ok = False
     try:
@@ -103,6 +131,7 @@ def health():
         geo_model_loaded=geo_ok,
         temporal_model_loaded=temporal_ok,
         api_version="1.0.0",
+        timestamp=datetime.now(timezone.utc).isoformat(),
     )
 
 

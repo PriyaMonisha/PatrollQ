@@ -1,8 +1,9 @@
 {
   "model": "kmeans_geo",
   "n_clusters": 8,
-  "silhouette": 0.41148,
-  "davies_bouldin": 0.778415,
-  "n_samples": 48870,
-  "inertia": 51.13
+  "silhouette": 0.4129,
+  "davies_bouldin": 1.295643,
+  "calinski_harabasz": 340613.41,
+  "n_samples": 488644,
+  "inertia": 521.38
 }

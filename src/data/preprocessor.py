@@ -39,10 +39,6 @@ from config import (
 )
 
 # ── Logger ──────────────────────────────────────────────────
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 # ── Column sets ─────────────────────────────────────────────
@@ -568,7 +564,7 @@ def _validate_final(df: pd.DataFrame) -> None:
         "latitude", "longitude", "date", "Hour",
         "Day_of_Week", "Month", "Year", "Season",
         "Is_Weekend", "primary_type_code", "location_desc_code",
-        "Arrest", "Domestic",
+        "arrest", "domestic",   # lowercase — matches BOOL_COLS (loader normalizes to snake_case)
     ]
 
     for col in critical_cols:

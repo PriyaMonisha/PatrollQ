@@ -24,6 +24,7 @@ from config import (
     KMEANS_GEO_N_CLUSTERS,
     RANDOM_STATE,
 )
+from src.utils.model_io import save_model as _save_model_artifact
 
 logger = logging.getLogger(__name__)
 
@@ -46,14 +47,18 @@ def run_kmeans_geo(
     Fit K-Means on lat/lon coordinates.
 
     Args:
-        df: Processed DataFrame with 'latitude' and 'longitude' columns
+        df: Full featured DataFrame (needs primary_type, arrest, Crime_Severity_Score
+            for cluster profiling in addition to latitude/longitude)
         k:  Number of clusters (default: KMEANS_GEO_N_CLUSTERS from config)
 
     Returns:
         dict with keys: labels (np.ndarray), metrics (dict), model (KMeans)
     """
     k = k or KMEANS_GEO_N_CLUSTERS
-    X = _geo_features(df)
+
+    # Extract and align coords — dropna may reduce row count
+    coords = df[GEO_FEATURES].dropna()
+    X = coords.to_numpy(dtype=np.float32)
 
     logger.info(f"[K-Means Geo] Fitting k={k} on {len(X):,} points...")
     model = KMeans(n_clusters=k, random_state=RANDOM_STATE, n_init=10)
@@ -63,6 +68,13 @@ def run_kmeans_geo(
     metrics["inertia"] = round(float(model.inertia_), 2)
     _save_labels(labels, df, "kmeans")
     _save_metrics(metrics, "kmeans")
+
+    # Save model for O(1) API inference (replaces O(n) nearest-neighbor scan)
+    _save_model_artifact(model, GEO_DIR, "kmeans_model.pkl")
+
+    # Generate cluster profile — pass df.loc[coords.index] so indices align with labels
+    profile = _compute_cluster_profile(df.loc[coords.index], labels, k)
+    _save_json(profile, "cluster_profile.json")
 
     logger.info(
         f"[K-Means Geo] silhouette={metrics['silhouette']:.4f} | "
@@ -276,3 +288,72 @@ def _save_json(data: dict, filename: str) -> None:
     with open(out_path, "w") as f:
         json.dump(data, f, indent=2)
     logger.info(f"  Saved: {out_path.name}")
+
+
+def _compute_cluster_profile(df: pd.DataFrame, labels: np.ndarray, k: int) -> dict:
+    """
+    Build a risk profile per cluster using crime severity, not cluster size.
+
+    Risk based on average Crime_Severity_Score (1–10):
+      HIGH   >= 7.0  (homicide, assault, weapons)
+      MEDIUM >= 4.0  (theft, narcotics, deception)
+      LOW    <  4.0  (criminal damage, trespass, liquor)
+
+    Size-based risk gives backwards results — a large cluster of minor crimes
+    scores HIGH while a small cluster of homicides scores LOW.
+
+    Requires df to have: Crime_Severity_Score, primary_type, arrest columns.
+    df must be df.loc[coords.index] (index-aligned with labels from dropna()).
+    """
+    df = df.copy()
+    df["_cluster"] = labels
+    profile: dict = {}
+
+    for cluster_id in range(k):
+        cluster_df = df[df["_cluster"] == cluster_id]
+
+        if len(cluster_df) == 0:
+            logger.warning(f"Cluster {cluster_id} is empty — K may be too large")
+            # Include empty cluster so profile has all k keys (prevents KeyError in predictor)
+            profile[int(cluster_id)] = {
+                "dominant_crime": "UNKNOWN",
+                "risk_level": "LOW",
+                "avg_severity_score": 0.0,
+                "crime_count": 0,
+                "arrest_rate": None,
+                "warning": "Empty cluster",
+            }
+            continue
+
+        if "Crime_Severity_Score" in cluster_df.columns:
+            avg_sev = float(cluster_df["Crime_Severity_Score"].mean())
+        elif "primary_type" in cluster_df.columns:
+            # Compute severity from primary_type when feature column absent
+            from config import SEVERITY_SCORES, SEVERITY_DEFAULT
+            avg_sev = float(
+                cluster_df["primary_type"].map(SEVERITY_SCORES).fillna(SEVERITY_DEFAULT).mean()
+            )
+        else:
+            avg_sev = 5.0  # neutral default — no crime type info available
+
+        risk = "HIGH" if avg_sev >= 7.0 else "MEDIUM" if avg_sev >= 4.0 else "LOW"
+
+        dominant = (
+            cluster_df["primary_type"].value_counts().index[0]
+            if "primary_type" in cluster_df.columns else "UNKNOWN"
+        )
+        arrest_rate = (
+            round(float(cluster_df["arrest"].mean()), 3)
+            if "arrest" in cluster_df.columns else None
+        )
+
+        profile[int(cluster_id)] = {
+            "dominant_crime": dominant,
+            "risk_level": risk,
+            "avg_severity_score": round(avg_sev, 3),
+            "crime_count": int(len(cluster_df)),
+            "arrest_rate": arrest_rate,
+        }
+
+    logger.info(f"  Cluster profile generated: {k} clusters")
+    return profile

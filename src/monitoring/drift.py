@@ -1,6 +1,6 @@
 # filename: src/monitoring/drift.py
 # purpose:  Data drift detection for PatrolIQ — KS-test (continuous features)
-#           and chi-squared (categorical). Uses training artifacts as reference.
+#           Uses training reference snapshot as reference distribution.
 #           Called by FastAPI /v1/drift/report endpoint.
 
 import logging
@@ -9,12 +9,12 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.stats import chi2_contingency, ks_2samp
+from scipy.stats import ks_2samp  # chi2_contingency removed — never called
 
 logger = logging.getLogger(__name__)
 
 ARTIFACTS_DIR = Path(os.getenv("ARTIFACTS_DIR", "./artifacts"))
-PROCESSED_DIR = Path(os.getenv("DATA_PATH", "./data/processed"))
+PROCESSED_DIR = Path(os.getenv("PROCESSED_DIR", "./data/processed"))
 _PROCESSED_CSV = PROCESSED_DIR / "chicago_crime_features_dev.csv.gz"
 _GEO_LABELS = ARTIFACTS_DIR / "geographic" / "kmeans_labels.csv"
 
@@ -23,20 +23,59 @@ _P_THRESHOLD = 0.05
 
 
 def _load_reference() -> pd.DataFrame:
-    """Load training data used as reference distribution."""
-    if _GEO_LABELS.exists():
-        return pd.read_csv(_GEO_LABELS)
-    raise FileNotFoundError(f"Reference data not found at {_GEO_LABELS}")
+    """
+    Load training reference distribution.
+    Priority: parquet snapshot (saved by pipeline) > features CSV fallback.
+    Never falls back to synthetic/random data.
+    """
+    ref_path = ARTIFACTS_DIR / "reference_distribution.parquet"
+    if ref_path.exists():
+        logger.info(f"Loading reference snapshot from {ref_path}")
+        return pd.read_parquet(ref_path)
+
+    # Backward-compat fallback — features CSV (pre-snapshot pipeline runs)
+    for candidate in [
+        PROCESSED_DIR / "chicago_crime_features_dev.csv.gz",
+        PROCESSED_DIR / "chicago_crime_features.csv.gz",
+    ]:
+        if candidate.exists():
+            logger.warning(
+                f"No reference snapshot found. Using fallback: {candidate.name}\n"
+                "Run training pipeline to generate proper reference: "
+                "python scripts/run_full_pipeline.py"
+            )
+            df = pd.read_csv(candidate)
+            df.columns = df.columns.str.lower()
+            wanted = ["latitude", "longitude", "hour", "arrest", "primary_type"]
+            available = [c for c in wanted if c in df.columns]
+            missing = set(wanted) - set(available)
+            if missing:
+                logger.warning(f"Reference missing columns: {missing}")
+            df = df[available].rename(columns={"hour": "Hour"})
+            return df
+
+    raise FileNotFoundError(
+        "No reference data found.\n"
+        "Fix: python scripts/run_full_pipeline.py\n"
+        f"Expected: {ref_path}"
+    )
 
 
 def _load_current() -> pd.DataFrame:
     """
     Load current/recent data window.
+    Uses last 20% of training features as proxy for 'recent' data.
     In production this would be a live data feed.
-    Here we simulate by using the last 20% of training data as 'recent'.
     """
     if _PROCESSED_CSV.exists():
-        df = pd.read_csv(_PROCESSED_CSV, usecols=["latitude", "longitude", "Hour", "arrest", "Primary_Type"])
+        df = pd.read_csv(
+            _PROCESSED_CSV,
+            usecols=["latitude", "longitude", "Hour", "arrest", "primary_type"]
+        )
+        # Normalize column names defensively — handles different pipeline version outputs
+        df.columns = df.columns.str.lower()
+        if "hour" in df.columns:
+            df = df.rename(columns={"hour": "Hour"})  # restore expected capitalization
         return df.tail(int(len(df) * 0.2))
     # Fallback to geo labels if features CSV unavailable
     df = pd.read_csv(_GEO_LABELS)
@@ -61,7 +100,7 @@ def _check_ks(feature: str, ref: pd.Series, cur: pd.Series) -> dict:
 
 
 def _check_arrest_rate(ref: pd.Series, cur: pd.Series) -> dict:
-    """Arrest rate drift — absolute shift in mean. """
+    """Arrest rate drift — absolute shift in mean."""
     def _to_bool(s: pd.Series) -> pd.Series:
         if s.dtype == object:
             return s.astype(str).str.lower().map({"true": True, "false": False})
@@ -93,30 +132,27 @@ def run_drift_report() -> list[dict]:
         return [{"feature": "all", "statistic": 0.0, "p_value": 1.0,
                  "drift_detected": False, "method": f"error: {e}"}]
 
-    # 1. Geographic drift — latitude
-    if "latitude" in ref_df.columns and "latitude" in cur_df.columns:
-        results.append(_check_ks("latitude", ref_df["latitude"], cur_df["latitude"]))
+    # Use safe column-name lookup — handles capitalization differences
+    for feature, col_candidates in [
+        ("latitude",    ["latitude", "Latitude"]),
+        ("longitude",   ["longitude", "Longitude"]),
+        ("hour_of_day", ["Hour", "hour"]),
+    ]:
+        ref_col = next((c for c in col_candidates if c in ref_df.columns), None)
+        cur_col = next((c for c in col_candidates if c in cur_df.columns), None)
+        if ref_col and cur_col:
+            results.append(_check_ks(feature, ref_df[ref_col], cur_df[cur_col]))
+        else:
+            logger.warning(f"Skipping {feature} — column not found in reference or current data")
 
-    # 2. Geographic drift — longitude
-    if "longitude" in ref_df.columns and "longitude" in cur_df.columns:
-        results.append(_check_ks("longitude", ref_df["longitude"], cur_df["longitude"]))
+    # Arrest rate drift
+    arr_ref = next((c for c in ["arrest", "Arrest"] if c in ref_df.columns), None)
+    arr_cur = next((c for c in ["arrest", "Arrest"] if c in cur_df.columns), None)
+    if arr_ref and arr_cur:
+        results.append(_check_arrest_rate(ref_df[arr_ref], cur_df[arr_cur]))
+    else:
+        logger.warning("Skipping arrest_rate — column not found")
 
-    # 3. Temporal drift — hour of day
-    hour_col = "Hour" if "Hour" in cur_df.columns else "hour"
-    if hour_col in cur_df.columns:
-        ref_hour = ref_df[hour_col] if hour_col in ref_df.columns else pd.Series(
-            np.random.randint(0, 24, len(ref_df)))  # synthetic fallback
-        results.append(_check_ks("hour_of_day", ref_hour, cur_df[hour_col]))
-
-    # 4. Arrest rate drift
-    arr_col = "arrest" if "arrest" in cur_df.columns else None
-    if arr_col and arr_col in ref_df.columns:
-        results.append(_check_arrest_rate(ref_df[arr_col], cur_df[arr_col]))
-    elif arr_col:
-        results.append({
-            "feature": "arrest_rate", "statistic": 0.0, "p_value": 1.0,
-            "drift_detected": False, "method": "skipped — no reference column",
-        })
-
-    logger.info(f"Drift report: {sum(r['drift_detected'] for r in results)}/{len(results)} features drifted")
+    drifted = sum(r["drift_detected"] for r in results)
+    logger.info(f"Drift report: {drifted}/{len(results)} features drifted")
     return results

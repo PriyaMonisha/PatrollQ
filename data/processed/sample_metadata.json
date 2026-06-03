@@ -1,8 +1,8 @@
 {
-  "n_records": 48870,
+  "n_records": 488644,
   "n_columns": 30,
-  "date_min": "2026-02-06",
+  "date_min": "2024-04-09",
   "date_max": "2026-04-30",
-  "crime_types": 30,
-  "sampled_at": "2026-05-11T19:20:20.199724"
+  "crime_types": 31,
+  "sampled_at": "2026-06-03T10:12:00.938096"
 }

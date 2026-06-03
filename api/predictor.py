@@ -1,6 +1,7 @@
 # filename: api/predictor.py
 # purpose:  Model loading and cluster prediction logic for FastAPI
 
+import json
 import math
 import os
 from functools import lru_cache
@@ -8,22 +9,8 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-import pandas as pd
 
 ARTIFACTS_DIR = Path(os.getenv("ARTIFACTS_DIR", "./artifacts"))
-
-# Cluster risk mapping derived from geo labels analysis (cluster → risk tier)
-# Clusters with highest crime density = HIGH; lowest = LOW
-_GEO_RISK_MAP: dict[int, str] = {
-    0: "HIGH", 1: "MEDIUM", 2: "HIGH", 3: "LOW",
-    4: "MEDIUM", 5: "HIGH", 6: "LOW", 7: "MEDIUM",
-}
-
-# Dominant crime type per geo cluster (from cluster profiling on training data)
-_GEO_DOMINANT_CRIME: dict[int, str] = {
-    0: "THEFT", 1: "BATTERY", 2: "THEFT", 3: "CRIMINAL DAMAGE",
-    4: "NARCOTICS", 5: "ASSAULT", 6: "BURGLARY", 7: "MOTOR VEHICLE THEFT",
-}
 
 _TEMPORAL_LABELS: dict[int, tuple[str, str]] = {
     0: ("Late Night / Early Morning", "Low activity; opportunistic crimes peak 1–5 AM"),
@@ -34,42 +21,64 @@ _TEMPORAL_LABELS: dict[int, tuple[str, str]] = {
 
 
 @lru_cache(maxsize=1)
-def get_temporal_model():
-    """Load temporal K-Means model once; cache for process lifetime."""
-    path = ARTIFACTS_DIR / "temporal" / "kmeans_model.pkl"
+def get_geo_model():
+    """Load geographic K-Means model once; cache for process lifetime."""
+    path = ARTIFACTS_DIR / "geographic" / "kmeans_model.pkl"
     if not path.exists():
-        raise FileNotFoundError(f"Temporal model not found at {path}. Run the training pipeline first.")
+        raise FileNotFoundError(
+            f"Geographic model not found at {path}. Run: python scripts/run_full_pipeline.py"
+        )
     return joblib.load(path)
 
 
 @lru_cache(maxsize=1)
-def get_geo_labels() -> pd.DataFrame:
-    """Load geographic cluster labels once; used to find nearest cluster."""
-    path = ARTIFACTS_DIR / "geographic" / "kmeans_labels.csv"
+def get_cluster_profile() -> dict:
+    """Load cluster risk profiles once; cache for process lifetime."""
+    path = ARTIFACTS_DIR / "geographic" / "cluster_profile.json"
     if not path.exists():
-        raise FileNotFoundError(f"Geographic labels not found at {path}. Run the training pipeline first.")
-    return pd.read_csv(path)
+        raise FileNotFoundError(
+            f"Cluster profile not found at {path}. Run: python scripts/run_full_pipeline.py"
+        )
+    with open(path) as f:
+        # JSON keys are strings — convert to int for consistent lookup
+        return {int(k): v for k, v in json.load(f).items()}
+
+
+@lru_cache(maxsize=1)
+def get_temporal_model():
+    """Load temporal K-Means model once; cache for process lifetime."""
+    path = ARTIFACTS_DIR / "temporal" / "kmeans_model.pkl"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Temporal model not found at {path}. Run: python scripts/run_full_pipeline.py"
+        )
+    return joblib.load(path)
 
 
 def predict_geographic(lat: float, lon: float) -> dict:
     """
-    Find nearest pre-computed geographic cluster for a given coordinate.
-    Uses Euclidean distance on lat/lon (valid for small Chicago area).
+    Predict geographic crime cluster for a coordinate using K-Means model.
+    Returns cluster risk profile from training-time cluster_profile.json.
     """
-    labels_df = get_geo_labels()
+    model = get_geo_model()
+    profile = get_cluster_profile()
 
-    # Vectorised nearest-neighbour on lat/lon
-    dlat = labels_df["latitude"].values - lat
-    dlon = labels_df["longitude"].values - lon
-    distances = dlat ** 2 + dlon ** 2
-    nearest_idx = int(np.argmin(distances))
-    cluster_id = int(labels_df.iloc[nearest_idx]["cluster"])
+    X = np.array([[lat, lon]], dtype=np.float32)
+    cluster_id = int(model.predict(X)[0])
+
+    cluster_info = profile.get(cluster_id, {})
+    risk_level = cluster_info.get("risk_level", "MEDIUM")
+    dominant_crime = cluster_info.get("dominant_crime", "THEFT")
+    avg_severity = cluster_info.get("avg_severity_score")
+    arrest_rate = cluster_info.get("arrest_rate")
 
     return {
         "cluster_id": cluster_id,
         "cluster_label": f"District Cluster {cluster_id}",
-        "crime_risk_level": _GEO_RISK_MAP.get(cluster_id, "MEDIUM"),
-        "dominant_crime_type": _GEO_DOMINANT_CRIME.get(cluster_id, "THEFT"),
+        "crime_risk_level": risk_level,
+        "dominant_crime_type": dominant_crime,
+        "avg_severity_score": avg_severity,
+        "arrest_rate": arrest_rate,
         "model_name": "kmeans_geo",
         "model_version": "v1",
     }
@@ -81,11 +90,9 @@ def predict_temporal(hour: int, day_of_week: int, month: int, is_weekend: bool |
     """
     model = get_temporal_model()
 
-    # Derive is_weekend from day_of_week if not provided
     if is_weekend is None:
         is_weekend = day_of_week >= 5
 
-    # Build cyclical feature vector matching training feature set
     features = np.array([[
         math.sin(2 * math.pi * hour / 24),
         math.cos(2 * math.pi * hour / 24),

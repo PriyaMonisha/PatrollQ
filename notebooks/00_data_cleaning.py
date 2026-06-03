@@ -30,10 +30,8 @@ from config import (
 from src.data.loader import load_raw_csv, save_processed
 from src.data.preprocessor import preprocess_data
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-)
+from src.utils.logger import setup_logging
+setup_logging()
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).parent.parent

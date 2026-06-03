@@ -130,9 +130,10 @@ def run_kmeans_temporal(
 
     _save_labels(labels, X, "kmeans")
     _save_metrics(metrics, "kmeans")
-    # TODO: load in api/predictor.py during T2.1 FastAPI work
-    # Artifact path: artifacts/temporal/kmeans_model.pkl
+    # Artifact loaded by api/predictor.py:get_temporal_model()
+    # Saved to: artifacts/temporal/kmeans_model.pkl
     _save_model(model, "kmeans_model.pkl")
+    logger.info("Temporal KMeans saved → artifacts/temporal/kmeans_model.pkl")
 
     logger.info(
         f"[K-Means Temporal] silhouette={sil:.4f} | "

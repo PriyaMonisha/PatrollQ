@@ -1,16 +1,16 @@
 =======================================================
 PATROLIQ — DATA CLEANING REPORT
 =======================================================
-Raw rows (full dataset)  : 50,000
-Sampled rows             : 50,000
-Cleaned rows             : 48,870
-Rows removed in cleaning : 1,130
+Raw rows (full dataset)  : 500,000
+Sampled rows             : 500,000
+Cleaned rows             : 488,644
+Rows removed in cleaning : 11,356
 Columns (raw)            : 22
 Columns (clean)          : 30
 New columns              : ['Hour', 'Day_of_Week', 'Month', 'Year', 'Season', 'Is_Weekend', 'primary_type_code', 'location_desc_code']
-Nulls before cleaning    : 478
-Nulls after cleaning     : 168
-Duplicates removed       : 8
+Nulls before cleaning    : 16,097
+Nulls after cleaning     : 8,073
+Duplicates removed       : 51
 =======================================================
 MISSING VALUE STRATEGY:
   latitude/longitude   -> Beat-median imputation

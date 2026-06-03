@@ -1,0 +1,23 @@
+{
+  "0": {
+    "dominant_crime": "NARCOTICS",
+    "risk_level": "MEDIUM",
+    "avg_severity_score": 5.219,
+    "crime_count": 32,
+    "arrest_rate": 0.531
+  },
+  "1": {
+    "dominant_crime": "ASSAULT",
+    "risk_level": "MEDIUM",
+    "avg_severity_score": 5.075,
+    "crime_count": 40,
+    "arrest_rate": 0.375
+  },
+  "2": {
+    "dominant_crime": "ASSAULT",
+    "risk_level": "MEDIUM",
+    "avg_severity_score": 5.5,
+    "crime_count": 40,
+    "arrest_rate": 0.425
+  }
+}

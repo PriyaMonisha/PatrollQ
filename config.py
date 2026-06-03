@@ -2,14 +2,24 @@
 # purpose:  Central configuration — all hyperparameters, paths, constants for PatrolIQ
 # version:  1.0
 
+import os
+import warnings
 from pathlib import Path
 
 # ── Execution Mode ───────────────────────────────────────────
-# FAST_MODE = True  → dev runs: smaller subsamples, skip t-SNE, K elbow range 2-5 only
-# FAST_MODE = False → production: full 500K pipeline, complete elbow sweep, full t-SNE
-# Rule: always develop with FAST_MODE=True; flip to False only for final artifact generation
-# Lesson learned from EMI project: define this BEFORE writing any training script (TR-02)
-FAST_MODE = True
+# FAST_MODE=true  → dev: 50K sample, elbow range 2-5, skip t-SNE
+# FAST_MODE=false → production: full 500K pipeline
+# Control via env var: export FAST_MODE=false
+FAST_MODE = os.getenv("FAST_MODE", "true").lower() == "true"
+
+if FAST_MODE:
+    warnings.warn(
+        "FAST_MODE=true: 50K sample active. Set FAST_MODE=false for production artifacts.",
+        RuntimeWarning,
+        stacklevel=2,
+    )
+    # print() not logger — config.py loads before logging is configured
+    print("[CONFIG] FAST_MODE active — development sample only", flush=True)
 
 # ── Reproducibility ──────────────────────────────────────────
 RANDOM_STATE = 42
@@ -17,8 +27,8 @@ RANDOM_STATE = 42
 # ── Paths ────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent
 DATA_RAW_DIR = BASE_DIR / "data" / "raw"
-DATA_PROCESSED_DIR = BASE_DIR / "data" / "processed"
-ARTIFACTS_DIR = BASE_DIR / "artifacts"
+DATA_PROCESSED_DIR = Path(os.getenv("PROCESSED_DIR", str(BASE_DIR / "data" / "processed")))
+ARTIFACTS_DIR = Path(os.getenv("ARTIFACTS_DIR", str(BASE_DIR / "artifacts")))
 MODELS_DIR = BASE_DIR / "models"
 DOCS_FIGURES_DIR = BASE_DIR / "docs" / "figures"
 
