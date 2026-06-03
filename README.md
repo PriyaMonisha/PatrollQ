@@ -347,18 +347,6 @@ CI runs on every push via GitHub Actions (`.github/workflows/ci.yml`).
 
 ---
 
-## Common Issues
-
-| Problem | Fix |
-|---------|-----|
-| `FileNotFoundError: chicago_crime_500k.csv.gz` | Run `python scripts/run_full_pipeline.py` first |
-| Port 5000 conflict (MLflow UI) | `mlflow ui --port 5001` |
-| `ModuleNotFoundError: config` | Activate venv: `venv\Scripts\activate` |
-| API returns 503 on predict | Artifacts missing — run pipeline or check `artifacts/geographic/` exists |
-| Grafana shows no data | Prometheus must be scraping: verify `docker compose ps` shows `api` as healthy |
-
----
-
 ## Data
 
 | Dataset | Records | Period |
